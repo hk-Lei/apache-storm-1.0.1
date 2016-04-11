@@ -70,7 +70,8 @@ public class DisruptorQueueBackpressureTest extends TestCase {
                 queue.getLowWaterMark(), cb.lowWaterMarkCalledPopulation);
     }
 
-    class DisruptorBackpressureCallbackImpl implements DisruptorBackpressureCallback {
+    class DisruptorBackpressureCallbackImpl implements
+            DisruptorBackpressureCallback {
         // the queue's population when the high water mark callback is called for the first time
         public long highWaterMarkCalledPopulation = -1;
         // the queue's population when the low water mark callback is called for the first time
