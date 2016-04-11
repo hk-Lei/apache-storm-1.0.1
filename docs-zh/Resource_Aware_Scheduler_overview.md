@@ -72,7 +72,7 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
                     .shuffleGrouping("exclaim1").setCPULoad(450.0);
 ```
 
-### 限制 Worker 进程(JVM) 的堆内存大小
+### 限制 Worker 进程 (JVM) 的堆内存大小
 
 ```java
     public void setTopologyWorkerMaxHeapSize(Number size)
@@ -80,7 +80,7 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
 参数：
 * Number size – Worker 进程被限制的内存大小(MB)
 
-用户可以使用上述 API 在每个 Topology 级别限制 RAS 分配给单个 Worker 进程的内存资源大小，这个 API 是内置的，所以 
+用户可以使用上述 API 在每个 Topology 级别限制 RAS 分配给单个 Worker 进程的内存资源大小，这个 API 是内置的，因此用户可以延伸到 executors 甚至到多个进程。但是，若延伸到 executors
 示例：
 ```java
     Config conf = new Config();
@@ -89,14 +89,17 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
 
 ### 设置节点的可用资源
 
+Storm 管理员可以通过修改相应节点上 Storm 安装目录下的 *conf/storm.yaml* 文件指定该节点的可用资源。
+
+Storm 管理员可以在 *conf/storm.yaml* 中添加以下配置项 (单位为 MB) 来指定一个节点的可用内存资源：
 ```java
     supervisor.memory.capacity.mb: [amount<Double>]
 ```
-
+Storm 管理员也可在 *conf/storm.yaml* 中添加以下配置项来指定一个节点的可用 CPU 资源：
 ```java
     supervisor.cpu.capacity: [amount<Double>]
 ```
-
+**Note：** 用户可以指定的可用 CPU 资源数量是如前所述的使用分数制表示的。
 示例：
 ```yaml
     supervisor.memory.capacity.mb: 20480.0
@@ -105,22 +108,24 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
 
 ### 其他配置项
 
+用户可以在 *conf/storm.yaml* 中为 RAS 配置一些默认配置项：
 ```yaml
-    //default value if on heap memory requirement is not specified for a component 
+    //当堆内存没有被组件指定使的默认值
     topology.component.resources.onheap.memory.mb: 128.0
 
-    //default value if off heap memory requirement is not specified for a component 
+    //当堆外内存没有被组件指定使的默认值
     topology.component.resources.offheap.memory.mb: 0.0
 
-    //default value if CPU requirement is not specified for a component 
+    //当所需 CPU 资源没有被组件指定时的默认值
     topology.component.cpu.pcore.percent: 10.0
 
-    //default value for the max heap size for a worker  
+    //当 Worker 进程的最近堆内存没有被指定时的默认值
     topology.worker.max.heap.size.mb: 768.0
 ```
 
 # Topology 优先级和每个用户资源配置
 
+很多 Storm 用户都是各项一个 Strom 集群，因此 RSA 也有多租户的功能。
 
 
 ## Setup
@@ -186,11 +191,11 @@ http://web.engr.illinois.edu/~bpeng/files/r-storm.pdf
 |A|<10 CPU, 50GB>|<2 CPU, 40 GB>|
 |B|< 20 CPU, 25GB>|<15 CPU, 10 GB>|
 
-User A’s average percentage satisfied of resource guarantee: 
+User A’s average percentage satisfied of resource guarantee:
 
 (2/10+40/50)/2  = 0.5
 
-User B’s average percentage satisfied of resource guarantee: 
+User B’s average percentage satisfied of resource guarantee:
 
 (15/20+10/25)/2  = 0.575
 
