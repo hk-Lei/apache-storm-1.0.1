@@ -5,7 +5,7 @@ documentation: true
 ---
 # 说明
 
-这篇文章的目的是提供对分布式计算系统 Storm 的资源感应调度器的一个介绍。文章将给你提供的是对 Storm 中的资源感应调度器的一个高度抽象的说明。
+这篇文章的目的是提供对分布式计算系统 Storm 的资源感应调度器 (RAS) 的一个介绍。文章将给你提供的是对 Storm 中的资源感应调度器的一个高度抽象的说明。
 
 ## 使用资源感应调度器
 
@@ -59,7 +59,9 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
 参数：
 * Number amount – 组件的一个实例所使用的 CPU 数量
 
-目前，一个组件所需要的 CPU 资源数或者一个节点的 CPU 可用资源数都是由一个分数来表示的。CPU 的使用量是一个难以定义的概念，不同的 CPU 架构依据不同的执行任务表现不同（**别扭**），用一个精确的数字表示所有的情况是不可能的。相反，我们约定优于配置的方法，主要是关心粗粒度的 CPU 使用率，同时仍提供指定数量更细粒度的可能性。
+目前，一个组件所需要的 CPU 资源数或者一个节点的 CPU 可用资源数都是由一个分数来表示的。CPU 的使用量是一个难以定义的概念，不同的 CPU 架构依据不同的执行任务表现不同，用一个精确的数字表示所有的情况是不可能的。相反，我们约定优于配置的方法，主要是关心粗粒度的 CPU 使用率，同时仍提供指定数量更细粒度的可能性（**求翻译**）。
+
+通常情况下，一个物理 CPU 核心为 100 分。你可以根据你的处理器的性能相应的调整这个值。重负载任务可以得到 100 分，那样它就可以使用整个核心；中等负载的任务设置 50 分；轻量级负载设置 25 分；微型任务设置 10 分。在某些情况下，你的一个任务需要生成其他的线程用来帮助处理，这些任务可能需要设置超过 100 分来表达他们对 CPU 的使用。如果遵循这些约定，通常情况下一个单线程任务所需要的 CPU 分值是其容量 * 100。
 
 ```java
     SpoutDeclarer s1 = builder.setSpout("word", new TestWordSpout(), 10);
@@ -76,8 +78,9 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
     public void setTopologyWorkerMaxHeapSize(Number size)
 ```
 参数：
-* Number size – 
+* Number size – Worker 进程被限制的内存大小(MB)
 
+用户可以使用上述 API 在每个 Topology 级别限制 RAS 分配给单个 Worker 进程的内存资源大小，这个 API 是内置的，所以 
 示例：
 ```java
     Config conf = new Config();
@@ -201,4 +204,4 @@ User B’s average percentage satisfied of resource guarantee:
 **DefaultEvictionStrategy**
 
 
-![Viewing metrics with VisualVM](images/resource_aware_scheduler_default_eviction_strategy.svg)
+![Viewing metrics with VisualVM](../docs/images/resource_aware_scheduler_default_eviction_strategy.svg)
