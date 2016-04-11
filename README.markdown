@@ -1,3 +1,8 @@
+
+# 说明
+
+docs-zh 目录下存放个人翻译及收集的 Strom 翻译文档，收集的会注明出处。若有不妥请联系我 moxingxing.lei@gmail.com ，我会第一时间删除。
+
 Master Branch: [![Travis CI](https://travis-ci.org/apache/storm.svg?branch=master)](https://travis-ci.org/apache/storm)
 
 Storm is a distributed realtime computation system. Similar to how Hadoop provides a set of general primitives for doing batch processing, Storm provides a set of general primitives for doing realtime computation. Storm is simple, can be used with any programming language, [is used by many companies](http://storm.apache.org/documentation/Powered-By.html), and is a lot of fun to use!
