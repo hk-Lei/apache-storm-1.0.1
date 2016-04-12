@@ -80,7 +80,7 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
 参数：
 * Number size – Worker 进程被限制的内存大小(MB)
 
-用户可以使用上述 API 在每个 Topology 级别限制 RAS 分配给单个 Worker 进程的内存资源大小，这个 API 是内置的，因此用户可以延伸到 executors 甚至到多个进程。但是，若延伸到 executors
+用户可以使用上述 API 在每个 Topology 级别限制 RAS 分配给单个 Worker 进程的内存资源大小，这个 API 是内置的，因此用户可以延伸到 executors 甚至到多个进程。但是，若延伸到 executors **待翻译**
 示例：
 ```java
     Config conf = new Config();
@@ -125,18 +125,19 @@ Storm 管理员也可在 *conf/storm.yaml* 中添加以下配置项来指定一�
 
 # Topology 优先级和每个用户资源配置
 
-很多 Storm 用户都是各项一个 Strom 集群，因此 RSA 也有多租户的功能。
-
+通常许多 Storm 用户都是共享一个 Storm 集群，因此 RSA 也有多租户的功能。RAS 可以做到在用户级别分配资源。在条件允许的情况下，RAS 可以满足每个用户具有一定数量的资源用于运行自己的 Topology。当 Storm 集群有额外的空闲资源时，RAS 会将其公平的分配给用户。不同的 Topology 的重要性也各不相同，有的 Topology 是用于实际生产中的，有的仅仅是实验性的，因此，RAS 在决定 Topologies 的调度或逐出时的顺序是会考虑 Topologies 的主要性。
 
 ## Setup
 
+可以在 *conf/user-resource-pools.yaml* 中指定用户资源的配置项，格式如下：
 ```yaml
     resource.aware.scheduler.user.pools:
-	[UserId]
-		cpu: [Amount of Guarantee CPU Resources]
-		memory: [Amount of Guarantee Memory Resources]
+    [UserId]
+    cpu: [Amount of Guarantee CPU Resources]
+    memory: [Amount of Guarantee Memory Resources]
 ```
 
+*user-resource-pools.yaml* 示例：
 ```yaml
     resource.aware.scheduler.user.pools:
         jerry:
@@ -149,37 +150,47 @@ Storm 管理员也可在 *conf/storm.yaml* 中添加以下配置项来指定一�
             cpu: 5000.0
             memory: 16384.0
 ```
+请注意，指定 CPU 和 Memory 资源的数值可以是整型也可以是 Double 类型的。
 
 ## API 概述
 ### 指定 Topology 优先级
-
+Topology 的优先级的范围为 0 ~ 29。可以将 Topologies 按照一定的范围分为几大类，例如：
 ```
     PRODUCTION => 0 – 9
     STAGING => 10 – 19
     DEV => 20 – 29
 ```
-
+因此，每个分类下包含 10 个子优先级。用户可以通过以下 API 设置 Topology 的优先级：
 ```java
     conf.setTopologyPriority(int priority)
 ```
+参数：
+* priority – 一个表示 Topology 优先级的整数
+
+**注意：** 0 ~ 29 并不是一个硬性限制，因此，用户可以指定大于 29 的数字的优先级。当然，数值越大，优先级越低的规律仍然有效。
 
 ### 指定调度策略
 
+用户可以指定 Topology 级别的调度策略。用户可以实现 IStrategy 接口为某些特殊的 Topology 定义新的调度策略。我们意识到不同的 Topology 可能需要不同的调度机制，因此我们抽象了这个插件式的接口。用户可以通过以下 API 在定义 Topology 的时候设置其的调度策略：
 ```java
     public void setTopologyStrategy(Class<? extends IStrategy> clazz)
 ```
+参数：
+* clazz – 实现了 IStrategy 接口的调度策略类
 
+示例：
 ```java
     conf.setTopologyStrategy(org.apache.storm.scheduler.resource.strategies.schedulin.DefaultResourceAwareStrategy.class);
 ```
-
-http://web.engr.illinois.edu/~bpeng/files/r-storm.pdf
+Storm 提供了一个默认的调度策略 - DefaultResourceAwareStrategy，其实现了 Storm 中的 RAS 调度算法，详见[原始论文](http://web.engr.illinois.edu/~bpeng/files/r-storm.pdf)。
 
 ### 指定 Topology 优先级策略
 
+调度顺序是一个插件式的接口，因此用户可以定义策略来区分 Topologies 的优先级。若用户需要定义自己的优先级策略，其需要实现 ISchedulingPriorityStrategy 接口。用户可以通过配置 *Config.RESOURCE_AWARE_SCHEDULER_PRIORITY_STRATEGY* 项来设置调度优先级策略，例如：
 ```yaml
     resource.aware.scheduler.priority.strategy: "org.apache.storm.scheduler.resource.strategies.priority.DefaultSchedulingPriorityStrategy"
 ```
+Storm 提供了一个默认的优先级调度策略，下文会说明这个默认优先级调度策略是如何工作的。
 
 **DefaultSchedulingPriorityStrategy**
 
