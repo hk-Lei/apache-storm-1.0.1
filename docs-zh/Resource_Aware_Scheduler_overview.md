@@ -58,8 +58,11 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
 ```
 参数：
 * Number amount – 组件的一个实例所使用的 CPU 数量
+*
+**待翻译**
+Currently, the amount of CPU resources a component requires or is available on a node is represented by a point system. CPU usage is a difficult concept to define. Different CPU architectures perform differently depending on the task at hand. They are so complex that expressing all of that in a single precise portable number is impossible. Instead we take a convention over configuration approach and are primarily concerned with rough level of CPU usage while still providing the possibility to specify amounts more fine grained.
 
-目前，一个组件所需要的 CPU 资源数或者一个节点的 CPU 可用资源数都是由一个分数来表示的。CPU 的使用量是一个难以定义的概念，不同的 CPU 架构依据不同的执行任务表现不同，用一个精确的数字表示所有的情况是不可能的。相反，我们约定优于配置的方法，主要是关心粗粒度的 CPU 使用率，同时仍提供指定数量更细粒度的可能性（**求翻译**）。
+目前，一个组件所需要的 CPU 资源数或者一个节点的 CPU 可用资源数都是由一个分数来表示的。CPU 的使用量是一个难以定义的概念，不同的 CPU 架构依据不同的执行任务表现不同，用一个精确的数字表示所有的情况是不可能的。相反，我们约定优于配置的方法，主要是关心粗粒度的 CPU 使用率，同时仍提供指定数量更细粒度的可能性。**未完**
 
 通常情况下，一个物理 CPU 核心为 100 分。你可以根据你的处理器的性能相应的调整这个值。重负载任务可以得到 100 分，那样它就可以使用整个核心；中等负载的任务设置 50 分；轻量级负载设置 25 分；微型任务设置 10 分。在某些情况下，你的一个任务需要生成其他的线程用来帮助处理，这些任务可能需要设置超过 100 分来表达他们对 CPU 的使用。如果遵循这些约定，通常情况下一个单线程任务所需要的 CPU 分值是其容量 * 100。
 
@@ -79,8 +82,12 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
 ```
 参数：
 * Number size – Worker 进程被限制的内存大小(MB)
+*
+**待翻译**
+The user can limit the amount of memory resources the resource aware scheduler allocates to a single worker on a per topology basis by using the above API.  This API is in place so that the users can spread executors to multiple workers.  However, spreading executors to multiple workers may increase the communication latency since executors will not be able to use Disruptor Queue for intra-process communication.
 
-用户可以使用上述 API 在每个 Topology 级别限制 RAS 分配给单个 Worker 进程的内存资源大小，这个 API 是内置的，因此用户可以延伸到 executors 甚至到多个进程。但是，若延伸到 executors **待翻译**
+用户可以使用上述 API 在每个 Topology 级别限制 RAS 分配给单个 Worker 进程的内存资源大小，这个 API 是内置的，因此用户可以延伸到 executors 甚至到多个进程。但是，**未完**
+
 示例：
 ```java
     Config conf = new Config();
@@ -194,30 +201,36 @@ Storm 提供了一个默认的优先级调度策略，下文会说明这个默�
 
 **DefaultSchedulingPriorityStrategy**
 
-
+调度顺序应该基于用户的目前使用的资源量离分配给他（她）的资源量的差距，我们应该优先考虑差距最大的。这个问题的难点是一个用户可以拥有多个分配资源，另一个用户又有另一套分配资源（个人认为是多个节点资源分配各不相同），我们如何公平的比较他们？ 我们使用平均资源占用百分比的方法来比较他们。
 示例：
 
-|User|Resource Guarantee|Resource Allocated|
+|用户|保证资源|分配资源|
 |----|------------------|------------------|
 |A|<10 CPU, 50GB>|<2 CPU, 40 GB>|
 |B|< 20 CPU, 25GB>|<15 CPU, 10 GB>|
 
-User A’s average percentage satisfied of resource guarantee:
+用户 A 的平均资源占用百分比为：
 
 (2/10+40/50)/2  = 0.5
 
-User B’s average percentage satisfied of resource guarantee:
+用户 B 的平均资源占用百分比为：
 
 (15/20+10/25)/2  = 0.575
 
-### 指定逐出策略
+因此，在这个示例中，用户 A 的平均资源占用百分比比用户 B 小，用户 A 应该优先被分配资源。也就是说，调度用户 A 提交的 Topology。
 
+在调度中，RAS 按照用户的平均资源占用百分比将其排序，然后优先调度占用比最低的 Topology。如果某个用户的分配资源被完全占用了，那么这个用户的平均资源占用百分比将会大于或等于 1。
+
+### 指定逐出策略
+逐出策略是用在当集群中已经没有空闲资源再去调度新的 Topologies 的时候。如果集群已满，我们需要一种机制来逐出一些 Topologies，这样可以保证用户的保证分配的资源得到满足已经额外的资源能够公平的共享给用户。逐出 Topologies 的策略也是以接口的方式提供的，这样用户可以实现自己的逐出 Topologies 的策略。如果用户实现自己的逐出策略，需要实现 IEvictionStrategy 接口并且设置 *Config.RESOURCE_AWARE_SCHEDULER_EVICTION_STRATEGY* 配置项的类为自己的实现类，例如：
 ```yaml
     resource.aware.scheduler.eviction.strategy: "org.apache.storm.scheduler.resource.strategies.eviction.DefaultEvictionStrategy"
 ```
-
+Storm 提供了一个默认的逐出策略。下文解释了这个默认的逐出策略是如何工作的：
 
 **DefaultEvictionStrategy**
 
+决定 Topology 是否应该被逐出时，我们应该考虑我们调度的这个 Topology 的优先级及这个 Topology 的所属用户的分配资源是否已经被使用完。
 
+我们不应该去逐出一个没满足其用户分配资源的 Topology。下面的流程图描述了逐出过程的逻辑：（**然而并没有图！**）
 ![Viewing metrics with VisualVM](../docs/images/resource_aware_scheduler_default_eviction_strategy.svg)
