@@ -58,7 +58,7 @@ topology.component.resources.offheap.memory.mb (default.yaml中指定的是 0.0M
 ```
 参数：
 * Number amount – 组件的一个实例所使用的 CPU 数量
-*
+
 **待翻译**
 Currently, the amount of CPU resources a component requires or is available on a node is represented by a point system. CPU usage is a difficult concept to define. Different CPU architectures perform differently depending on the task at hand. They are so complex that expressing all of that in a single precise portable number is impossible. Instead we take a convention over configuration approach and are primarily concerned with rough level of CPU usage while still providing the possibility to specify amounts more fine grained.
 
@@ -82,7 +82,7 @@ Currently, the amount of CPU resources a component requires or is available on a
 ```
 参数：
 * Number size – Worker 进程被限制的内存大小(MB)
-*
+
 **待翻译**
 The user can limit the amount of memory resources the resource aware scheduler allocates to a single worker on a per topology basis by using the above API.  This API is in place so that the users can spread executors to multiple workers.  However, spreading executors to multiple workers may increase the communication latency since executors will not be able to use Disruptor Queue for intra-process communication.
 
