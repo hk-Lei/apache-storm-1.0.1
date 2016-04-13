@@ -42,6 +42,7 @@ import java.util.Set;
 public class ResourceAwareScheduler implements IScheduler {
 
     // Object that holds the current scheduling state
+    // 存储当前调度状态
     private SchedulingState schedulingState;
 
     @SuppressWarnings("rawtypes")
@@ -346,6 +347,7 @@ public class ResourceAwareScheduler implements IScheduler {
                 continue;
             }
             if (!userMap.containsKey(topologySubmitter)) {
+                //若 配置的 user pool 没有 Topology 的提交者，将其加入到 userMap 中，默认的 cpu 和 memory 都是 0.0
                 userMap.put(topologySubmitter, new User(topologySubmitter, userResourcePools.get(topologySubmitter)));
             }
             if (cluster.getUnassignedExecutors(td).size() > 0) {
@@ -369,7 +371,7 @@ public class ResourceAwareScheduler implements IScheduler {
 
     /**
      * Get resource guarantee configs
-     *
+     * user-resource-pools.yaml 优先级大于 storm.yaml
      * @return a map that contains resource guarantees of every user of the following format
      * {userid->{resourceType->amountGuaranteed}}
      */
