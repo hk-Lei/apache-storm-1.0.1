@@ -61,6 +61,7 @@ public class ResourceAwareScheduler implements IScheduler {
     public void schedule(Topologies topologies, Cluster cluster) {
         LOG.debug("\n\n\nRerunning ResourceAwareScheduler...");
         //initialize data structures
+        //1 初始化数据结构，集群状态，UserMap topologies 等
         initialize(topologies, cluster);
         //logs everything that is currently scheduled and the location at which they are scheduled
         LOG.info("Cluster scheduling:\n{}", ResourceUtils.printScheduling(cluster, topologies));
@@ -347,7 +348,7 @@ public class ResourceAwareScheduler implements IScheduler {
                 continue;
             }
             if (!userMap.containsKey(topologySubmitter)) {
-                //若 配置的 user pool 没有 Topology 的提交者，将其加入到 userMap 中，默认的 cpu 和 memory 都是 0.0
+                //若配置的 user pool 没有 Topology 的提交者，将其加入到 userMap 中，默认的 cpu 和 memory 都是 0.0
                 userMap.put(topologySubmitter, new User(topologySubmitter, userResourcePools.get(topologySubmitter)));
             }
             if (cluster.getUnassignedExecutors(td).size() > 0) {
