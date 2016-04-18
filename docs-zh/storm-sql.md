@@ -4,27 +4,26 @@ layout: documentation
 documentation: true
 ---
 
-The Storm SQL integration allows users to run SQL queries over streaming data in Storm. Not only the SQL interface allows faster development cycles on streaming analytics, but also opens up the opportunities to unify batch data processing like [Apache Hive](///hive.apache.org) and real-time streaming data analytics.
+Storm SQL 集成允许用户在 Storm 流式数据中运行 SQL 查询。在流式分析中，SQL 接口不仅会加快开发周期，而且开辟了统一批处理 [Apache Hive](///hive.apache.org) 和实时流式数据处理的机会。
 
-At a very high level StormSQL compiles the SQL queries to [Trident](Trident-API-Overview.html) topologies and executes them in Storm clusters. This document provides information of how to use StormSQL as end users. For people that are interested in more details in the design and the implementation of StormSQL please refer to the [this](storm-sql-internal.html) page.
+StormSQL 会将 SQL 查询高水准的编译为 [Trident](Trident-API-Overview.html) topologies 并且在 Storm 集群上允许他们。这篇文章将给用户介绍如何使用 StormSQL。如果有人对 StormSQL 的设计和实现的细节感兴趣，请参考 [这里](storm-sql-internal.html)
 
-## Usage
+## 使用
 
-Run the ``storm sql`` command to compile SQL statements into Trident topology, and submit it to the Storm cluster
+允许 ``storm sql`` 命令编译 SQL 语句为 Trident topology，并且提交到 Storm 集群。
 
-```
+```bash
 $ bin/storm sql <sql-file> <topo-name>
 ```
 
-In which `sql-file` contains a list of SQL statements to be executed, and `topo-name` is the name of the topology.
+这里 `sql-file` 包含需要执行的 SQL 语句，`topo-name` 是提交的 topology 的名字。
 
+## 支持的功能
 
-## Supported Features
-
-The following features are supported in the current repository:
+在目前的报表库(1.0.0)中，支持以下功能：
 
 * Streaming from and to external data sources
-* Filtering tuples
+* 过滤 tuples
 * Projections
 
 ## Specifying External Data Sources
