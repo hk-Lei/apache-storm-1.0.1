@@ -6,16 +6,16 @@ documentation: true
 
 ## Trident RAS API
 
-The Trident RAS (Resource Aware Scheduler) API provides a mechanism to allow users to specify the resource consumption of a Trident topology. The API looks exactly like the base RAS API, only it is called on Trident Streams instead of Bolts and Spouts.
+Trident RAS(资源感知调度器) API 提供了用户指定 Trident Topology 组件资源的方法。这个 API 看起来确实和基础的 RAS API 一样，只是其实被 Trident 流调用而不是被 Bolts 或 Spouts。
 
-In order to avoid duplication and inconsistency in documentation, the purpose and effects of resource setting are not described here, but are instead found in the [Resource Aware Scheduler Overview](Resource_Aware_Scheduler_overview.html)
+为了避免文档变化导致的不一致情况，资源设置的目的及影响就不在这赘述，如有需要请参见[Resource Aware Scheduler Overview](Resource_Aware_Scheduler_overview.html)
 
 ### Use
 
-First, an example:
+首先，示例如下：
 
 ```java
-    TridentTopology topo = new TridentTopology();
+    TridentTopology topology = new TridentTopology();
     TridentState wordCounts =
         topology
             .newStream("words", feeder)
@@ -35,18 +35,16 @@ First, an example:
             .setMemoryLoad(2048);
 ```
 
-Resources can be set for each operation (except for grouping, shuffling, partitioning).
-Operations that are combined by Trident into single Bolts will have their resources summed.
+可以对每个操作（Operation）设置资源（除了 grouping、shuffling、partitioning）。Trident 若将一些 Operations 合并为一个 Bolt，那么，这个 Bolt 将拥有这些 Operations 的资源总和。
 
-Every Bolt is given **at least** the default resources, regardless of user settings.
+无论用户设置如何，都会给予每个 Bolt **at least** 的默认资源。
 
-In the above case, we end up with
+在上述示例中，我们最终得到：
 
+- 一个 Spout 和一个 Spout Coordinator 分别拥有 20% 的 CPU 负载以及 512M 的堆内存和 256 的堆外内存。
+- 一个 Bolt 拥有 `Split` 和 `BangAdder` 的资源之和：60% 的 CPU 负载以及 1536M(1024 + 512) 的堆内存
+- 一个 Bolt 拥有 100% 的 CPU 负载和 2048M 的堆内存以及默认值的堆外内存资源。
 
-- a spout and spout coordinator with a CPU load of 20% each, and a memory load of 512MiB on-heap and 256MiB off-heap.
-- a bolt with 60% cpu load (10% + 50%) and a memory load of 1536MiB (1024 + 512) on-heap from the combined `Split` and `BangAdder`
-- a bolt with 100% cpu load and a memory load of 2048MiB on-heap, with default value for off-heap.
-
-The API can be called as many times as is desired.
-It may be called after every operation, after some of the operations, or used in the same manner as `parallelismHint()` to set resources for a whole section.
-Resource declarations have the same *boundaries* as parallelism hints. They don't cross any groupings, shufflings, or any other kind of repartitioning.
+这个 API 可被多次调用。
+它有可能在每个 Operation 之后调用；或一些 Operations 之后调用；或者以同样的方式在 `parallelismHint()` 之后调用，用来设置某个整体的资源。 
+声明资源同设置并行度有一样的 *boundaries* 。他们不能越过如何的 groupings、shufflings 或者其他重新分区的操作。

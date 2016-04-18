@@ -6,9 +6,9 @@ documentation: true
 
 # CGroups in Storm
 
-CGroups are used by Storm to limit the resource usage of workers to guarantee fairness and QOS.  
+CGroups 被 Storm 用于限制 Workers 的使用资源，来保证公平及 QOS （what is the fuck?）
 
-**Please note: CGroups is currently supported only on Linux platforms (kernel version 2.6.24 and above)** 
+**请注意：CGroups 目前只有 Linux 平台支持 (内核版本 2.6.24 及以上)** 
 
 ## Setup
 
