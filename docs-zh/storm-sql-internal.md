@@ -4,19 +4,20 @@ layout: documentation
 documentation: true
 ---
 
-This page describes the design and the implementation of the Storm SQL integration.
+这篇文章描述了 Storm SQL 的设计和实现。
 
-## Overview
+## 概览
 
-SQL is a well-adopted yet complicated standard. Several projects including Drill, Hive, Phoenix and Spark have invested significantly in their SQL layers. One of the main design goal of StormSQL is to leverage the existing investments for these projects. StormSQL leverages [Apache Calcite](///calcite.apache.org) to implement the SQL standard. StormSQL focuses on compiling the SQL statements to Storm / Trident topologies so that they can be executed in Storm clusters.
+SQL 是一种友好的但是却很复杂的标准。很多项目包括 Drill、Hive、Phoenix 及 Spark 都在其 SQL 层面投入很大。StormSQL 的主要设计目标就是利用现有的资源。StormSQL 利用 [Apache Calcite](///calcite.apache.org) 来实现 SQL 标准，而 StormSQL 则主要集中在编译 SQL 语句到 Storm/Trident topologies，这样他们就可以运行在 Storm 集群之上。
 
-Figure 1 describes the workflow of executing a SQL query in StormSQL. First, users provide a sequence of SQL statements. StormSQL parses the SQL statements and translates them to a Calcite logical plan. A logical plan consists of a sequence of SQL logical operators that describe how the query should be executed irrespective to the underlying execution engines. Some examples of logical operators include `TableScan`, `Filter`, `Projection` and `GroupBy`.
+图 1 描述了在 StormSQL 中执行一个 SQL 查询的过程。首先，用户提供一系列 SQL 语句，StormSQL 解析 SQL 语句并将其转换成 Calcite 的逻辑计划。由一系列 SQL 逻辑操作符组成的一个逻辑计划，其描述的查询执行过程应该与底层的执行引擎无关。逻辑操作符例如 `TableScan`, `Filter`, `Projection` and `GroupBy`.
 
 <div align="center">
 <img title="Workflow of StormSQL" src="images/storm-sql-internal-workflow.png" style="max-width: 80rem"/>
 
 <p>Figure 1: Workflow of StormSQL.</p>
 </div>
+
 
 The next step is to compile the logical execution plan down to a physical execution plan. A physical plan consists of physical operators that describes how to execute the SQL query in *StormSQL*. Physical operators such as `Filter`, `Projection`, and `GroupBy` are directly mapped to operations in Trident topologies. StormSQL also compiles expressions in the SQL statements into Java byte codes and plugs them into the Trident topologies.
 
