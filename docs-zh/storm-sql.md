@@ -22,13 +22,13 @@ $ bin/storm sql <sql-file> <topo-name>
 
 在目前的报表库(1.0.0)中，支持以下功能：
 
-* Streaming from and to external data sources
+* 流处理读取及写入外部数据源
 * 过滤 tuples
-* Projections
+* 预测（Projections）
 
-## Specifying External Data Sources
+## 指定外部数据源
 
-In StormSQL data is represented by external tables. Users can specify data sources using the `CREATE EXTERNAL TABLE` statement. The syntax of `CREATE EXTERNAL TABLE` closely follows the one defined in [Hive Data Definition Language](https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL):
+StormSQL 数据是由外部表的形式表现的，用户可以使用 `CREATE EXTERNAL TABLE` 语句指定数据源。`CREATE EXTERNAL TABLE` 的语法严格遵循 [Hive Data Definition Language](https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL) 中的定义。
 
 ```
 CREATE EXTERNAL TABLE table_name field_list
@@ -41,21 +41,21 @@ CREATE EXTERNAL TABLE table_name field_list
     [ AS select_stmt ]
 ```
 
-You can find detailed explanations of the properties in [Hive Data Definition Language](https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL). For example, the following statement specifies a Kafka spouts and sink:
+你可以在 [Hive Data Definition Language](https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL) 中找到各属性的详细解释。例如：下列语句指定了一个 Kafka spout 和 sink：
 
 ```
 CREATE EXTERNAL TABLE FOO (ID INT PRIMARY KEY) LOCATION 'kafka://localhost:2181/brokers?topic=test' TBLPROPERTIES '{"producer":{"bootstrap.servers":"localhost:9092","acks":"1","key.serializer":"org.apache.org.apache.storm.kafka.IntSerializer","value.serializer":"org.apache.org.apache.storm.kafka.ByteBufferSerializer"}}'
 ```
 
-## Plugging in External Data Sources
+## 对接外部数据源
 
-Users plug in external data sources through implementing the `ISqlTridentDataSource` interface and registers them using the mechanisms of Java's service loader. The external data source will be chosen based on the scheme of the URI of the tables. Please refer to the implementation of `storm-sql-kafka` for more details.
+用户对接外部数据源需要实现 `ISqlTridentDataSource` 接口并且使用 Java 的服务加载机制注册他们，外部数据源就会基于表中 URI 的 Scheme 来选择。请参阅 `storm-sql-kafka` 来了解更多实现细节。
 
-## Example: Filtering Kafka Stream
+## 示例: 过滤 Kafka 数据流
 
-Let's say there is a Kafka stream that represents the transactions of orders. Each message in the stream contains the id of the order, the unit price of the product and the quantity of the orders. The goal is to filter orders where the transactions are significant and to insert these orders into another Kafka stream for further analysis.
+假设有一个 Kafka 数据流存储交易的订单数据。流中的每个消息包含订单的 id 、产品的单价及订单的数量。我们的目的是过滤出有很大交易额的订单，将这些订单插入另一个 Kafka 数据流用于进行进一步分析。
 
-The user can specify the following SQL statements in the SQL file:
+用户可以在 SQL 文件中指定如下的 SQL 语句：
 
 ```
 CREATE EXTERNAL TABLE ORDERS (ID INT PRIMARY KEY, UNIT_PRICE INT, QUANTITY INT) LOCATION 'kafka://localhost:2181/brokers?topic=orders' TBLPROPERTIES '{"producer":{"bootstrap.servers":"localhost:9092","acks":"1","key.serializer":"org.apache.org.apache.storm.kafka.IntSerializer","value.serializer":"org.apache.org.apache.storm.kafka.ByteBufferSerializer"}}'
@@ -63,14 +63,14 @@ CREATE EXTERNAL TABLE LARGE_ORDERS (ID INT PRIMARY KEY, TOTAL INT) LOCATION 'kaf
 INSERT INTO LARGE_ORDERS SELECT ID, UNIT_PRICE * QUANTITY AS TOTAL FROM ORDERS WHERE UNIT_PRICE * QUANTITY > 50
 ```
 
-The first statement defines the table `ORDER` which represents the input stream. The `LOCATION` clause specifies the ZkHost (`localhost:2181`), the path of the brokers in ZooKeeper (`/brokers`) and the topic (`orders`). The `TBLPROPERTIES` clause specifies the configuration of [KafkaProducer](http://kafka.apache.org/documentation.html#producerconfigs).
-Current implementation of `storm-sql-kafka` requires specifying both `LOCATION` and `TBLPROPERTIES` clauses even though the table is read-only or write-only.
+第一条语句定义的 `ORDER` 表代表了输入流。 `LOCATION` 字段指定了 ZK 地址 (`localhost:2181`) 、brokers 在 Zookeeper 中的路径 (`/brokers`) 以及 topic (`orders`)。`TBLPROPERTIES` 字段指定了 [KafkaProducer](http://kafka.apache.org/documentation.html#producerconfigs) 的配置项。
+目前 `storm-sql-kafka`的实现即使 table 是 read-only 或 write-only 情况都需要指定 `LOCATION` 和 `TBLPROPERTIES` 项。
 
-Similarly, the second statement specifies the table `LARGE_ORDERS` which represents the output stream. The third statement is a `SELECT` statement which defines the topology: it instructs StormSQL to filter all orders in the external table `ORDERS`, calculates the total price and inserts matching records into the Kafka stream specified by `LARGE_ORDER`.
+类似的第二条语句定义的 `LARGE_ORDERS` 表代表了输出流。第三条 `SELECT` 语句定义了 topology : 其使 StormSQL 过滤外部表 `ORDERS` 中的所有订单(译注：过滤出总价在 50 以上的订单)，计算总价格并将满足的记录插入指定的 `LARGE_ORDER` Kafka 流中。
 
-To run this example, users need to include the data sources (`storm-sql-kafka` in this case) and its dependency in the class path. One approach is to put the required jars into the `extlib` directory:
+要运行这个示例，用户需要在 classpath 中包含数据源 (这个示例中是 `storm-sql-kafka`) 及其依赖。一种办法是将所需的 jars 放到 `extlib` 目录中：
 
-```
+```bash
 $ cp curator-client-2.5.0.jar curator-framework-2.5.0.jar zookeeper-3.4.6.jar
  extlib/
 $ cp scala-library-2.10.4.jar kafka-clients-0.8.2.1.jar kafka_2.10-0.8.2.1.jar metrics-core-2.2.0.jar extlib/
@@ -79,18 +79,18 @@ $ cp jackson-annotations-2.6.0.jar extlib/
 $ cp storm-kafka-*.jar storm-sql-kafka-*.jar storm-sql-runtime-*.jar extlib/
 ```
 
-The next step is to submit the SQL statements to StormSQL:
+接下来向 StormSQL 提交 SQL 语句：
 
-```
+```bash
 $ bin/storm sql order_filtering order_filtering.sql
 ```
 
-By now you should be able to see the `order_filtering` topology in the Storm UI.
+现在你应该能够在 Storm UI 中看到 `order_filtering` topology。
 
-## Current Limitations
+## 当前缺陷
 
-Aggregation, windowing and joining tables are yet to be implemented. Specifying parallelism hints in the topology is not yet supported. All processors have a parallelism hint of 1.
+聚合(Aggregation)、 窗口(windowing)和连表(joining) 尚未实现；暂不支持指定 topology 的并行度；所有处理任务的并行度都是 1。
 
-Users also need to provide the dependency of the external data sources in the `extlib` directory. Otherwise the topology will fail to run because of `ClassNotFoundException`.
+用户还需要在 `extlib` 目录中提供外部数据源的依赖，否则 topology 将因为 `ClassNotFoundException` 而无法运行。
 
-The current implementation of the Kafka connector in StormSQL assumes both the input and the output are in JSON formats. The connector has not yet recognized the `INPUTFORMAT` and `OUTPUTFORMAT` clauses yet.
+StormSQL 中当前 Kafka 实现连接器假定输入和输出数据都是JSON格式。连接器还不支持 `INPUTFORMAT` 和 `OUTPUTFORMAT`。
