@@ -52,15 +52,11 @@ public interface IWindowedBolt extends IComponent {
 }
 ```
 
-每次窗口启动，就会调用 `execute` 方法。TupleWindow 参数
-Every time the window activates, the `execute` method is invoked. The TupleWindow parameter gives access to the current tuples
-in the window, the tuples that expired and the new tuples that are added since last window was computed which will be useful
-for efficient windowing computations.
+每次窗口启动，就会调用 `execute` 方法。通过 TupleWindow 参数可以访问在窗口中当前 tuples，自从前一窗口计算完后，这些 tuples 就会过期，新的 tuples 会添加到 TupleWindow中，这有助于我们进行有效窗口的计算。
 
-Bolts that needs windowing support typically would extend `BaseWindowedBolt` which has the apis for specifying the
-window length and sliding intervals.
+Bolts 如果需要基础的窗口功能，可以继承 `BaseWindowedBolt` 抽象类，其具有指定窗口长度和滑动间隔的 API。
 
-E.g.
+例如：
 
 ```java
 public class SlidingWindowBolt extends BaseWindowedBolt {
@@ -101,59 +97,54 @@ public static void main(String[] args) {
 
 ```java
 withWindow(Count windowLength, Count slidingInterval)
-Tuple count based sliding window that slides after `slidingInterval` number of tuples.
+基于 Tuple 数量的滑动窗口在 `slidingInterval` 数量的 tuples 后滑动
 
 withWindow(Count windowLength)
-Tuple count based window that slides with every incoming tuple.
+基于 Tuple 数量的滑动窗口在每个 tuple 后滑动
 
 withWindow(Count windowLength, Duration slidingInterval)
-Tuple count based sliding window that slides after `slidingInterval` time duration.
+基于 Tuple 数量的滑动窗口在 `slidingInterval` 时间间隔后滑动
 
 withWindow(Duration windowLength, Duration slidingInterval)
-Time duration based sliding window that slides after `slidingInterval` time duration.
+基于时间间隔的滑动窗口在 `slidingInterval` 时间间隔后滑动
 
 withWindow(Duration windowLength)
-Time duration based window that slides with every incoming tuple.
+基于时间间隔的滑动窗口在每个 tuple 后滑动
 
 withWindow(Duration windowLength, Count slidingInterval)
-Time duration based sliding window configuration that slides after `slidingInterval` number of tuples.
+基于时间间隔的滑动窗口在 `slidingInterval` 数量的 tuples 后滑动
 
 withTumblingWindow(BaseWindowedBolt.Count count)
-Count based tumbling window that tumbles after the specified count of tuples.
+基于 Tuple 数量的滚动窗口在指定数量的 tuples 后滚动
 
 withTumblingWindow(BaseWindowedBolt.Duration duration)
-Time duration based tumbling window that tumbles after the specified time duration.
-
+基于时间间隔的滚动窗口在指定时间间隔后滚动
 ```
 
-## Tuple timestamp and out of order tuples
-By default the timestamp tracked in the window is the time when the tuple is processed by the bolt. The window calculations
-are performed based on the processing timestamp. Storm has support for tracking windows based on the source generated timestamp.
+## Tuple 时间戳和有序 tuples
+
+窗口中的默认跟踪时间戳是 bolt 处理 tuple 的时间。窗口计算的执行是基于这个时间戳的。Storm 已经支持基于数据源生成的时间戳跟踪窗口。
 
 ```java
 /**
-* Specify a field in the tuple that represents the timestamp as a long value. If this
-* field is not present in the incoming tuple, an {@link IllegalArgumentException} will be thrown.
+* 指定 tuple 中的一个字段（long 型）的值来代表时间戳，如果这个字段在输入的 tuple 中不存在，就会抛出  {@link IllegalArgumentException} 异常。
 *
-* @param fieldName the name of the field that contains the timestamp
+* @param fieldName 包含时间戳的字段名
 */
 public BaseWindowedBolt withTimestampField(String fieldName)
 ```
 
-The value for the above `fieldName` will be looked up from the incoming tuple and considered for windowing calculations.
-If the field is not present in the tuple an exception will be thrown. Along with the timestamp field name, a time lag parameter
-can also be specified which indicates the max time limit for tuples with out of order timestamps.
+从输入的 tuple 中查找到的上述 `fieldName` 的值会影响窗口的计算。
 
-E.g. If the lag is 5 secs and a tuple `t1` arrived with timestamp `06:00:05` no tuples may arrive with tuple timestamp earlier than `06:00:00`. If a tuple
-arrives with timestamp 05:59:59 after `t1` and the window has moved past `t1`, it will be treated as a late tuple and not processed. Currently the late
- tuples are just logged in the worker log files at INFO level.
+如何在 tuple 中不存在该字段，将会抛出异常，同时间戳字段名一起，还可以指定一个延迟时间参数，其表示了有时序 tuples 的最大时间限制。
+
+例如：如果延迟是 5s，tuple `t1` 的到达时间是 `06:00:05`，那么将没有时间（携带的时间）早于 `06:00:00` 的 tuple 到达（译注：窗口会忽略掉那些 达到时间 < 当前 tuple 的到达时间 - lag 的 tuples）。如果一个 tuple 在 `t1` 之后到达，但时间是 05:59:59，其对应的窗口已经被移动到 `t1` 之前了。 那么这个 tuple 会被看做是迟到的 tuple 而不被处理。目前，迟到的 tuples 会以 INFO 级别的日志记录到 worker 的日志文件中。
 
 ```java
 /**
-* Specify the maximum time lag of the tuple timestamp in milliseconds. It means that the tuple timestamps
-* cannot be out of order by more than this amount.
+* 指定 tuple 时间（毫秒）的最大延迟，这意味着 tuple 的延迟时间不能大于这个值
 *
-* @param duration the max lag duration
+* @param duration 最大延迟时间
 */
 public BaseWindowedBolt withLag(Duration duration)
 ```
@@ -186,7 +177,7 @@ For example, consider tuple timestamp based processing with following window par
 ```
 |-----|-----|-----|-----|-----|-----|-----|
 0     10    20    30    40    50    60    70
-````
+```
 
 Current ts = `09:00:00`
 
@@ -217,18 +208,12 @@ e10 is not evaluated since the tuple ts `8:00:39` is beyond the watermark time `
 
 The window calculation considers the time gaps and computes the windows based on the tuple timestamp.
 
-## Guarentees
-The windowing functionality in storm core currently provides at-least once guarentee. The values emitted from the bolts
-`execute(TupleWindow inputWindow)` method are automatically anchored to all the tuples in the inputWindow. The downstream
-bolts are expected to ack the received tuple (i.e the tuple emitted from the windowed bolt) to complete the tuple tree.
-If not the tuples will be replayed and the windowing computation will be re-evaluated.
+## 消息保障
 
-The tuples in the window are automatically acked when the expire, i.e. when they fall out of the window after
-`windowLength + slidingInterval`. Note that the configuration `topology.message.timeout.secs` should be sufficiently more
-than `windowLength + slidingInterval` for time based windows; otherwise the tuples will timeout and get replayed and can result
-in duplicate evaluations. For count based windows, the configuration should be adjusted such that `windowLength + slidingInterval`
-tuples can be received within the timeout period.
+Storm 核心模块中的窗口功能目前支持至少一次的消息保障。bolts 通过 `execute(TupleWindow inputWindow)` 方法发出的 values 会自动锚于该 TupleWindow 的所有 tuples 上。期待下游 bolts ack 其接受的的 tuple （即：从窗口 bolt 发出的 tuple）来完成 tuple 树。否则这些 tuples 将会被重发，窗口程序也会重新计算。
 
-## Example topology
-An example toplogy `SlidingWindowTopology` shows how to use the apis to compute a sliding window sum and a tumbling window
-average.
+窗口中的 tuples 过期时（即超过 `windowLength + slidingInterval`）会自动被 acked。注意：对于基于时间的窗口，`topology.message.timeout.secs` 配置项应该远大于 `windowLength + slidingInterval`，否则 tuples 会因为超时而被重新发送，进而导致重复计算；对于基于数量的窗口，这个配置项应该根据 `windowLength + slidingInterval` 内的 tuples 能够在超时期间被接收并处理完而定。
+
+## 示例 topology
+
+示例 topology `SlidingWindowTopology` 展示了如何使用这些 API 来计算滑动窗口的 sum 指标及滚动窗口的平均值指标。
