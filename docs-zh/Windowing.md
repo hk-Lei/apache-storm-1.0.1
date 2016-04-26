@@ -4,17 +4,14 @@ layout: documentation
 documentation: true
 ---
 
-Storm core has support for processing a group of tuples that falls within a window. Windows are specified with the 
-following two parameters,
+Storm 核心模块已经支持了处理 `window` (一组 tuples 组成)。 窗口可以用以下两个参数指定：
+1. Window length -  窗口的长度或时间
+2. Sliding interval - 窗口的滑动时间间隔
 
-1. Window length - the length or duration of the window
-2. Sliding interval - the interval at which the windowing slides
+## 滑动窗口
 
-## Sliding Window
-
-Tuples are grouped in windows and window slides every sliding interval. A tuple can belong to more than one window.
-
-For example a time duration based sliding window with length 10 secs and sliding interval of 5 seconds.
+滑动窗口安装滑动时间间隔滑动，tuples 会被分组到这些滑动窗口中。一个 tuple 可能属于不止一个窗口。
+比如一个基于时间的滑动窗口，其窗口长度为 10s，但滑动间隔为 5s。
 
 ```
 | e1 e2 | e3 e4 e5 e6 | e7 e8 e9 |...
@@ -24,14 +21,12 @@ For example a time duration based sliding window with length 10 secs and sliding
         |------------ w2 ------->|
 ```
 
-The window is evaluated every 5 seconds and some of the tuples in the first window overlaps with the second one.
-		
+每隔 5s 该窗口滑动一次，其中一个 tuples 即属于第一个窗口也属于第二个窗口。
 
-## Tumbling Window
+## 滚动窗口
 
-Tuples are grouped in a single window based on time or count. Any tuple belongs to only one of the windows.
-
-For example a time duration based tumbling window with length 5 secs.
+无论窗口是基于时间的还是基于长度的，任何 tuple 都只会被分组到其中一个窗口中。
+如下是一个基于时间的滚动窗口，其长度是 5s：
 
 ```
 | e1 e2 | e3 e4 e5 e6 | e7 e8 e9 |...
@@ -39,17 +34,17 @@ For example a time duration based tumbling window with length 5 secs.
    w1         w2            w3
 ```
 
-The window is evaluated every five seconds and none of the windows overlap.
+每隔 5s 该窗口滚动一次，窗口没有任何重叠的部分。
 
-Storm supports specifying the window length and sliding intervals as a count of the number of tuples or as a time duration.
+Storm 支持指定窗口的长度和滑动间隔（tuples 的数量或时间）。
 
-The bolt interface `IWindowedBolt` is implemented by bolts that needs windowing support.
+若使用窗口功能需要实现 `IWindowedBolt` 接口。
 
 ```java
 public interface IWindowedBolt extends IComponent {
     void prepare(Map stormConf, TopologyContext context, OutputCollector collector);
     /**
-     * Process tuples falling within the window and optionally emit 
+     * Process tuples falling within the window and optionally emit
      * new tuples based on the tuples in the input window.
      */
     void execute(TupleWindow inputWindow);
@@ -57,24 +52,25 @@ public interface IWindowedBolt extends IComponent {
 }
 ```
 
+每次窗口启动，就会调用 `execute` 方法。TupleWindow 参数
 Every time the window activates, the `execute` method is invoked. The TupleWindow parameter gives access to the current tuples
-in the window, the tuples that expired and the new tuples that are added since last window was computed which will be useful 
+in the window, the tuples that expired and the new tuples that are added since last window was computed which will be useful
 for efficient windowing computations.
 
 Bolts that needs windowing support typically would extend `BaseWindowedBolt` which has the apis for specifying the
 window length and sliding intervals.
 
-E.g. 
+E.g.
 
 ```java
 public class SlidingWindowBolt extends BaseWindowedBolt {
 	private OutputCollector collector;
-	
+
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
     	this.collector = collector;
     }
-	
+
     @Override
     public void execute(TupleWindow inputWindow) {
 	  for(Tuple tuple: inputWindow.get()) {
@@ -89,7 +85,7 @@ public class SlidingWindowBolt extends BaseWindowedBolt {
 public static void main(String[] args) {
     TopologyBuilder builder = new TopologyBuilder();
      builder.setSpout("spout", new RandomSentenceSpout(), 1);
-     builder.setBolt("slidingwindowbolt", 
+     builder.setBolt("slidingwindowbolt",
                      new SlidingWindowBolt().withWindow(new Count(30), new Count(10)),
                      1).shuffleGrouping("spout");
     Config conf = new Config();
@@ -97,11 +93,11 @@ public static void main(String[] args) {
     conf.setNumWorkers(1);
 
     StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
-	
+
 }
 ```
 
-The following window configurations are supported.
+支持以下窗口配置：
 
 ```java
 withWindow(Count windowLength, Count slidingInterval)
@@ -144,9 +140,9 @@ are performed based on the processing timestamp. Storm has support for tracking 
 public BaseWindowedBolt withTimestampField(String fieldName)
 ```
 
-The value for the above `fieldName` will be looked up from the incoming tuple and considered for windowing calculations. 
-If the field is not present in the tuple an exception will be thrown. Along with the timestamp field name, a time lag parameter 
-can also be specified which indicates the max time limit for tuples with out of order timestamps. 
+The value for the above `fieldName` will be looked up from the incoming tuple and considered for windowing calculations.
+If the field is not present in the tuple an exception will be thrown. Along with the timestamp field name, a time lag parameter
+can also be specified which indicates the max time limit for tuples with out of order timestamps.
 
 E.g. If the lag is 5 secs and a tuple `t1` arrived with timestamp `06:00:05` no tuples may arrive with tuple timestamp earlier than `06:00:00`. If a tuple
 arrives with timestamp 05:59:59 after `t1` and the window has moved past `t1`, it will be treated as a late tuple and not processed. Currently the late
@@ -163,13 +159,13 @@ public BaseWindowedBolt withLag(Duration duration)
 ```
 
 ### Watermarks
-For processing tuples with timestamp field, storm internally computes watermarks based on the incoming tuple timestamp. Watermark is 
+For processing tuples with timestamp field, storm internally computes watermarks based on the incoming tuple timestamp. Watermark is
 the minimum of the latest tuple timestamps (minus the lag) across all the input streams. At a higher level this is similar to the watermark concept
 used by Flink and Google's MillWheel for tracking event based timestamps.
 
-Periodically (default every sec), the watermark timestamps are emitted and this is considered as the clock tick for the window calculation if 
+Periodically (default every sec), the watermark timestamps are emitted and this is considered as the clock tick for the window calculation if
 tuple based timestamps are in use. The interval at which watermarks are emitted can be changed with the below api.
- 
+
 ```java
 /**
 * Specify the watermark event generation interval. For tuple based timestamps, watermark events
@@ -198,7 +194,7 @@ Tuples `e1(6:00:03), e2(6:00:05), e3(6:00:07), e4(6:00:18), e5(6:00:26), e6(6:00
 
 At time t = `09:00:01`, watermark w1 = `6:00:31` is emitted since no tuples earlier than `6:00:31` can arrive.
 
-Three windows will be evaluated. The first window end ts (06:00:10) is computed by taking the earliest event timestamp (06:00:03) 
+Three windows will be evaluated. The first window end ts (06:00:10) is computed by taking the earliest event timestamp (06:00:03)
 and computing the ceiling based on the sliding interval (10s).
 
 1. `5:59:50 - 06:00:10` with tuples e1, e2, e3
@@ -224,16 +220,15 @@ The window calculation considers the time gaps and computes the windows based on
 ## Guarentees
 The windowing functionality in storm core currently provides at-least once guarentee. The values emitted from the bolts
 `execute(TupleWindow inputWindow)` method are automatically anchored to all the tuples in the inputWindow. The downstream
-bolts are expected to ack the received tuple (i.e the tuple emitted from the windowed bolt) to complete the tuple tree. 
-If not the tuples will be replayed and the windowing computation will be re-evaluated. 
+bolts are expected to ack the received tuple (i.e the tuple emitted from the windowed bolt) to complete the tuple tree.
+If not the tuples will be replayed and the windowing computation will be re-evaluated.
 
-The tuples in the window are automatically acked when the expire, i.e. when they fall out of the window after 
-`windowLength + slidingInterval`. Note that the configuration `topology.message.timeout.secs` should be sufficiently more 
+The tuples in the window are automatically acked when the expire, i.e. when they fall out of the window after
+`windowLength + slidingInterval`. Note that the configuration `topology.message.timeout.secs` should be sufficiently more
 than `windowLength + slidingInterval` for time based windows; otherwise the tuples will timeout and get replayed and can result
 in duplicate evaluations. For count based windows, the configuration should be adjusted such that `windowLength + slidingInterval`
 tuples can be received within the timeout period.
 
 ## Example topology
-An example toplogy `SlidingWindowTopology` shows how to use the apis to compute a sliding window sum and a tumbling window 
+An example toplogy `SlidingWindowTopology` shows how to use the apis to compute a sliding window sum and a tumbling window
 average.
-
