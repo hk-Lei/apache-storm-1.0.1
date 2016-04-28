@@ -4,31 +4,30 @@ layout: documentation
 documentation: true
 ---
 
-A framework for creating and deploying Apache Storm streaming computations with less friction.
+一个用于简化 Apache Storm 流式计算任务创建和部署的框架
 
-## Definition
+## 定义
 **flux** |fləks| _noun_
 
-1. The action or process of flowing or flowing out
-2. Continuous change
-3. In physics, the rate of flow of a fluid, radiant energy, or particles across a given area
-4. A substance mixed with a solid to lower its melting point
+1. 流入流出的动作或过程
+2. 持续变化
+3. 在物理学中，流体、辐射、微粒可以穿过一定的区域
+4. 与固体物质混合，用来降低熔点
 
-## Rationale
-Bad things happen when configuration is hard-coded. No one should have to recompile or repackage an application in
-order to change configuration.
+## 基本原理
+当配置是写死的时候总是会出现很多问题。不应该有人为了更改配置而重新编译或打包应用程序。
 
-## About
-Flux is a framework and set of utilities that make defining and deploying Apache Storm topologies less painful and
-deveoper-intensive.
+## 简介
+Flux 是一个用于简化创建和部署 Apache Storm Topologies 的框架和工具集。
 
-Have you ever found yourself repeating this pattern?:
+
+你是不是发现你以前经常重复写如下代码：
 
 ```java
 
 public static void main(String[] args) throws Exception {
-    // logic to determine if we're running locally or not...
-    // create necessary config options...
+    // 决定我们是不是在本地运行的逻辑...
+    // 创建必要的配置项...
     boolean runLocal = shouldRunLocal();
     if(runLocal){
         LocalCluster cluster = new LocalCluster();
@@ -39,7 +38,7 @@ public static void main(String[] args) throws Exception {
 }
 ```
 
-Wouldn't something like this be easier:
+从来不会像这样简单：
 
 ```bash
 storm jar mytopology.jar org.apache.storm.flux.Flux --local config.yaml
@@ -51,67 +50,57 @@ or:
 storm jar mytopology.jar org.apache.storm.flux.Flux --remote config.yaml
 ```
 
-Another pain point often mentioned is the fact that the wiring for a Topology graph is often tied up in Java code,
-and that any changes require recompilation and repackaging of the topology jar file. Flux aims to alleviate that
-pain by allowing you to package all your Storm components in a single jar, and use an external text file to define
-the layout and configuration of your topologies.
+另一个经常被提及的痛点：通常在 Java 代码中绑定 Topology 图，任何更改都需要重新编译和打包 Topology 的 jar 文件。Flux 旨在减轻这个痛点：通过将所有的 Storm 组件打包成一个 jar， 用一个额外的文本文件来定义 topologies 的布局和配置。
 
-## Features
+## 功能
 
- * Easily configure and deploy Storm topologies (Both Storm core and Microbatch API) without embedding configuration
-   in your topology code
- * Support for existing topology code (see below)
- * Define Storm Core API (Spouts/Bolts) using a flexible YAML DSL
- * YAML DSL support for most Storm components (storm-kafka, storm-hdfs, storm-hbase, etc.)
- * Convenient support for multi-lang components
- * External property substitution/filtering for easily switching between configurations/environments (similar to Maven-style
-   `${variable.name}` substitution)
+ * 不用在 Topology 的代码嵌入配置项，易于配置和部署 Storm topologies (包括 Storm 核心和微批 API)
+ * 支持已有的 topology 代码 （见下文）
+ * 使用一个灵活的 YAML DSL 定义 Storm 核心 API (Spouts/Bolts)
+ * YAML DSL 支持大多数 Storm 组件 (storm-kafka, storm-hdfs, storm-hbase, 等等)
+ * 方便支持多语言的组件
+ * 外部属性替换/过滤，对于配置/环境环境之间轻松切换(类似于 Maven 的 `${variable.name}` 替换方式)
 
-## Usage
+## 使用
 
-To use Flux, add it as a dependency and package all your Storm components in a fat jar, then create a YAML document
-to define your topology (see below for YAML configuration options).
+使用 Flux，需将其作为依赖打包到包含所有 Storm 组件的 fat jar 中，然后创建一个 YAML 文件来定义 topology 结构（参见下面的 YAML 配置项）。
 
-### Building from Source
-The easiest way to use Flux, is to add it as a Maven dependency in you project as described below.
+### 从源码构建
+使用 Flux 最简单的方式是，如下所述将其作为一个 Maven 依赖添加到项目中。
 
-If you would like to build Flux from source and run the unit/integration tests, you will need the following installed
-on your system:
+如果你想从源代码构建 Flux 及运行单元/集成测试，则需要在系统中安装以下软件：
 
-* Python 2.6.x or later
-* Node.js 0.10.x or later
+* Python 2.6.x or 或更高版本
+* Node.js 0.10.x or 或更高版本
 
-#### Building with unit tests enabled:
+#### 构建中运行单元测试
 
 ```
 mvn clean install
 ```
 
-#### Building with unit tests disabled:
-If you would like to build Flux without installing Python or Node.js you can simply skip the unit tests:
+#### 构建中不运行单元测试
+如果想在构建 Flux 时不用安装 Python 或者 Node.js，你可以简单的跳过单元测试：
 
 ```
 mvn clean install -DskipTests=true
 ```
 
-Note that if you plan on using Flux to deploy topologies to a remote cluster, you will still need to have Python
-installed since it is required by Apache Storm.
+注意：如果你计划使用 Flux 将 topologies 部署在远程集群上，那么仍然需要安装 Python，因为是 Apache Storm 必须的。
 
-
-#### Building with integration tests enabled:
+#### 构建中运行集成测试
 
 ```
 mvn clean install -DskipIntegration=false
 ```
 
 
-### Packaging with Maven
-To enable Flux for your Storm components, you need to add it as a dependency such that it's included in the Storm
-topology jar. This can be accomplished with the Maven shade plugin (preferred) or the Maven assembly plugin (not
-recommended).
+### Maven 打包
+为了在 Storm 组件中启用 Flux，需要将其添加为一个依赖，使得其包含在 Storm topology jar 中。可以使用 Maven shade 插件（首选）或者 Maven assembly 插件（不推荐）来完成。
 
 #### Flux Maven Dependency
-The current version of Flux is available in Maven Central at the following coordinates:
+目前版本(译注：1.0.0)的 Flux 已经在 Maven 仓库中可用，坐标如下：
+
 ```xml
 <dependency>
     <groupId>org.apache.storm</groupId>
@@ -120,23 +109,23 @@ The current version of Flux is available in Maven Central at the following coord
 </dependency>
 ```
 
-#### Creating a Flux-Enabled Topology JAR
-The example below illustrates Flux usage with the Maven shade plugin:
+#### 创建一个启用 Flux 的 Topology JAR
+下面的例子演示了通过 Maven shade 插件使用 Flux：
 
  ```xml
-<!-- include Flux and user dependencies in the shaded jar -->
+<!-- 在 shaded jar 中引入 Flux 和用户依赖 -->
 <dependencies>
-    <!-- Flux include -->
+    <!-- 引入 Flux -->
     <dependency>
         <groupId>org.apache.storm</groupId>
         <artifactId>flux-core</artifactId>
         <version>${storm.version}</version>
     </dependency>
 
-    <!-- add user dependencies here... -->
+    <!-- 在这里添加用户依赖... -->
 
 </dependencies>
-<!-- create a fat jar that includes all dependencies -->
+<!-- 创建一个包含所有依赖的 jar -->
 <build>
     <plugins>
         <plugin>
@@ -169,7 +158,7 @@ The example below illustrates Flux usage with the Maven shade plugin:
 </build>
  ```
 
-### Deploying and Running a Flux Topology
+### 部署运行 Flux Topology
 Once your topology components are packaged with the Flux dependency, you can run different topologies either locally
 or remotely using the `storm jar` command. For example, if your fat jar is named `myTopology-0.1.0-SNAPSHOT.jar` you
 could run it locally with the command:
