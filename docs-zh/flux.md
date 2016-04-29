@@ -159,17 +159,14 @@ mvn clean install -DskipIntegration=false
  ```
 
 ### 部署运行 Flux Topology
-Once your topology components are packaged with the Flux dependency, you can run different topologies either locally
-or remotely using the `storm jar` command. For example, if your fat jar is named `myTopology-0.1.0-SNAPSHOT.jar` you
-could run it locally with the command:
-
+一旦 topology 组件和 Flux 依赖打包到一起，就可以通过 `storm jar` 命令在本地或者远程运行不同的 topologies。例如：假设 jar 包叫 `myTopology-0.1.0-SNAPSHOT.jar`，可以使用下述命令在本地运行：
 
 ```bash
 storm jar myTopology-0.1.0-SNAPSHOT.jar org.apache.storm.flux.Flux --local my_config.yaml
 
 ```
 
-### Command line options
+### 命令行选项
 ```
 usage: storm jar <my_topology_uber_jar.jar> org.apache.storm.flux.Flux
              [options] <topology-config.yaml>
@@ -201,7 +198,7 @@ usage: storm jar <my_topology_uber_jar.jar> org.apache.storm.flux.Flux
                               (requires Storm 0.9.3 or later)
 ```
 
-**NOTE:** Flux tries to avoid command line switch collision with the `storm` command, and allows any other command line
+**注意:** Flux tries to avoid command line switch collision with the `storm` command, and allows any other command line
 switches to pass through to the `storm` command.
 
 For example, you can use the `storm` command switch `-c` to override a topology configuration property. The following

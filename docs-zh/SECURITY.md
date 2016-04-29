@@ -4,16 +4,16 @@ layout: documentation
 documentation: true
 ---
 
-# Running Apache Storm Securely
+# 安全地运行 Apache Storm
 
 Apache Storm offers a range of configuration options when trying to secure
-your cluster.  By default all authentication and authorization is disabled but 
+your cluster.  By default all authentication and authorization is disabled but
 can be turned on as needed.
 
 ## Firewall/OS level Security
 
 You can still have a secure storm cluster without turning on formal
-Authentication and Authorization. But to do so usually requires 
+Authentication and Authorization. But to do so usually requires
 configuring your Operating System to restrict the operations that can be done.
 This is generally a good idea even if you plan on running your cluster with Auth.
 
@@ -22,7 +22,7 @@ the scope of this document.
 
 It is generally a good idea to enable a firewall and restrict incoming network
 connections to only those originating from the cluster itself and from trusted
-hosts and services, a complete list of ports storm uses are below. 
+hosts and services, a complete list of ports storm uses are below.
 
 If the data your cluster is processing is sensitive it might be best to setup
 IPsec to encrypt all traffic being sent between the hosts in the cluster.
@@ -47,7 +47,7 @@ The UI and logviewer processes provide a way to not only see what a cluster is
 doing, but also manipulate running topologies.  In general these processes should
 not be exposed except to users of the cluster.
 
-Some form of Authentication is typically required, with using java servlet filters 
+Some form of Authentication is typically required, with using java servlet filters
 
 ```yaml
 ui.filter: "filter.class"
@@ -81,12 +81,12 @@ curl  -i --negotiate -u:anyUser  -b ~/cookiejar.txt -c ~/cookiejar.txt  http://s
 
 1. Firefox: Goto about:config and search for network.negotiate-auth.trusted-uris double-click to  add value "http://storm-ui-hostname:8080"
 2. Google-chrome:  start from command line with: google-chrome --auth-server-whitelist="*storm-ui-hostname" --auth-negotiate-delegate-whitelist="*storm-ui-hostname"   
-3. IE:  Configure trusted websites to include "storm-ui-hostname" and allow negotiation for that website 
+3. IE:  Configure trusted websites to include "storm-ui-hostname" and allow negotiation for that website
 
 **Caution**: In AD MIT Keberos setup the key size is bigger than the default UI jetty server request header size. Make sure you set ui.header.buffer.bytes to 65536 in storm.yaml. More details are on [STORM-633](https://issues.apache.org/jira/browse/STORM-633)
 
 
-## UI / DRPC SSL 
+## UI / DRPC SSL
 
 Both UI and DRPC allows users to configure ssl .
 
@@ -94,13 +94,13 @@ Both UI and DRPC allows users to configure ssl .
 
 For UI users needs to set following config in storm.yaml. Generating keystores with proper keys and certs should be taken care by the user before this step.
 
-1. ui.https.port 
+1. ui.https.port
 2. ui.https.keystore.type (example "jks")
 3. ui.https.keystore.path (example "/etc/ssl/storm_keystore.jks")
 4. ui.https.keystore.password (keystore password)
 5. ui.https.key.password (private key password)
 
-optional config 
+optional config
 6. ui.https.truststore.path (example "/etc/ssl/storm_truststore.jks")
 7. ui.https.truststore.password (truststore password)
 8. ui.https.truststore.type (example "jks")
@@ -115,13 +115,13 @@ If users want to setup 2-way auth
 ### DRPC
 similarly to UI , users need to configure following for DRPC
 
-1. drpc.https.port 
+1. drpc.https.port
 2. drpc.https.keystore.type (example "jks")
 3. drpc.https.keystore.path (example "/etc/ssl/storm_keystore.jks")
 4. drpc.https.keystore.password (keystore password)
 5. drpc.https.key.password (private key password)
 
-optional config 
+optional config
 6. drpc.https.truststore.path (example "/etc/ssl/storm_truststore.jks")
 7. drpc.https.truststore.password (truststore password)
 8. drpc.https.truststore.type (example "jks")
@@ -146,7 +146,7 @@ this document and it is assumed that you have done that already.
 ### Create Headless Principals and keytabs
 
 Each Zookeeper Server, Nimbus, and DRPC server will need a service principal, which, by convention, includes the FQDN of the host it will run on.  Be aware that the zookeeper user *MUST* be zookeeper.  
-The supervisors and UI also need a principal to run as, but because they are outgoing connections they do not need to be service principals. 
+The supervisors and UI also need a principal to run as, but because they are outgoing connections they do not need to be service principals.
 The following is an example of how to setup kerberos principals, but the
 details may vary depending on your KDC and OS.
 
@@ -176,7 +176,7 @@ storm.thrift.transport: "org.apache.storm.security.auth.kerberos.KerberosSaslTra
 java.security.auth.login.config: "/path/to/jaas.conf"
 ```
 
-Nimbus and the supervisor processes will also connect to ZooKeeper(ZK) and we want to configure them to use Kerberos for authentication with ZK. To do this append 
+Nimbus and the supervisor processes will also connect to ZooKeeper(ZK) and we want to configure them to use Kerberos for authentication with ZK. To do this append
 ```
 -Djava.security.auth.login.config=/path/to/jaas.conf
 ```
@@ -329,7 +329,7 @@ nimbus.authorizer: "org.apache.storm.security.auth.authorizer.SimpleACLAuthorize
 
 DRPC has a separate authorizer configuration for it.  Do not use SimpleACLAuthorizer for DRPC.
 
-The *SimpleACLAuthorizer* plug-in needs to know who the supervisor users are, and it needs to know about all of the administrator users, including the user running the ui daemon. 
+The *SimpleACLAuthorizer* plug-in needs to know who the supervisor users are, and it needs to know about all of the administrator users, including the user running the ui daemon.
 
 These are set through *nimbus.supervisor.users* and *nimbus.admins* respectively.  Each can either be a full Kerberos principal name, or the name of the user with host and realm stripped off.
 
@@ -361,7 +361,7 @@ There is currently only one config in =multitenant-scheduler.yaml=, =multitenant
 For example:
 
 ```yaml
-multitenant.scheduler.user.pools: 
+multitenant.scheduler.user.pools:
     "evans": 10
     "derek": 10
 ```
@@ -388,10 +388,10 @@ This config file also needs to be owned by root and not have world or group writ
 
 ### Impersonating a user
 A storm client may submit requests on behalf of another user. For example, if a `userX` submits an oozie workflow and as part of workflow execution if user `oozie` wants to submit a topology on behalf of `userX`
-it can do so by leveraging the impersonation feature.In order to submit topology as some other user , you can use `StormSubmitter.submitTopologyAs` API. Alternatively you can use `NimbusClient.getConfiguredClientAs` 
-to get a nimbus client as some other user and perform any nimbus action(i.e. kill/rebalance/activate/deactivate) using this client. 
+it can do so by leveraging the impersonation feature.In order to submit topology as some other user , you can use `StormSubmitter.submitTopologyAs` API. Alternatively you can use `NimbusClient.getConfiguredClientAs`
+to get a nimbus client as some other user and perform any nimbus action(i.e. kill/rebalance/activate/deactivate) using this client.
 
-To ensure only authorized users can perform impersonation you should start nimbus with `nimbus.impersonation.authorizer` set to `org.apache.storm.security.auth.authorizer.ImpersonationAuthorizer`. 
+To ensure only authorized users can perform impersonation you should start nimbus with `nimbus.impersonation.authorizer` set to `org.apache.storm.security.auth.authorizer.ImpersonationAuthorizer`.
 The `ImpersonationAuthorizer` uses `nimbus.impersonation.acl` as the acl to authorize users. Following is a sample nimbus config for supporting impersonation:
 
 ```yaml
@@ -422,13 +422,13 @@ nimbus.impersonation.acl:
 ### Automatic Credentials Push and Renewal
 Individual topologies have the ability to push credentials (tickets and tokens) to workers so that they can access secure services.  Exposing this to all of the users can be a pain for them.
 To hide this from them in the common case plugins can be used to populate the credentials, unpack them on the other side into a java Subject, and also allow Nimbus to renew the credentials if needed.
-These are controlled by the following configs. topology.auto-credentials is a list of java plugins, all of which must implement IAutoCredentials interface, that populate the credentials on gateway 
+These are controlled by the following configs. topology.auto-credentials is a list of java plugins, all of which must implement IAutoCredentials interface, that populate the credentials on gateway
 and unpack them on the worker side. On a kerberos secure cluster they should be set by default to point to org.apache.storm.security.auth.kerberos.AutoTGT.  
 nimbus.credential.renewers.classes should also be set to this value so that nimbus can periodically renew the TGT on behalf of the user.
 
 nimbus.credential.renewers.freq.secs controls how often the renewer will poll to see if anything needs to be renewed, but the default should be fine.
 
-In addition Nimbus itself can be used to get credentials on behalf of the user submitting topologies. This can be configures using nimbus.autocredential.plugins.classes which is a list 
+In addition Nimbus itself can be used to get credentials on behalf of the user submitting topologies. This can be configures using nimbus.autocredential.plugins.classes which is a list
 of fully qualified class names ,all of which must implement INimbusCredentialPlugin.  Nimbus will invoke the populateCredentials method of all the configured implementation as part of topology
 submission. You should use this config with topology.auto-credentials and nimbus.credential.renewers.classes so the credentials can be populated on worker side and nimbus can automatically renew
 them. Currently there are 2 examples of using this config, AutoHDFS and AutoHBase which auto populates hdfs and hbase delegation tokens for topology submitter so they don't have to distribute keytabs
@@ -456,23 +456,21 @@ The Logviewer daemon now is also responsible for cleaning up old log files for d
  With SimpleACLAuthorizer any user with valid kerberos ticket can deploy a topology or do further operations such as activate, deactivate , access cluster information.
  One can restrict this access by specifying nimbus.users or nimbus.groups. If nimbus.users configured only the users in the list can deploy a topology or access cluster.
  Similarly nimbus.groups restrict storm cluster access to users who belong to those groups.
- 
+
  To configure specify the following config in storm.yaml
 
 ```yaml
-nimbus.users: 
+nimbus.users:
    - "testuser"
 ```
 
-or 
+or
 
 ```yaml
-nimbus.groups: 
+nimbus.groups:
    - "storm"
 ```
- 
+
 
 ### DRPC
 Hopefully more on this soon
-
-
