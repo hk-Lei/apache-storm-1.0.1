@@ -6,30 +6,21 @@ documentation: true
 
 # 安全地运行 Apache Storm
 
-Apache Storm offers a range of configuration options when trying to secure
-your cluster.  By default all authentication and authorization is disabled but
-can be turned on as needed.
+Apache Storm 提供了一系列配置选项来安全的运行集群。默认情况下所有的认证和授权都是关闭的，但可以根据需要来开启。
 
-## Firewall/OS level Security
+## 防火墙/系统级别安全性
 
-You can still have a secure storm cluster without turning on formal
-Authentication and Authorization. But to do so usually requires
-configuring your Operating System to restrict the operations that can be done.
-This is generally a good idea even if you plan on running your cluster with Auth.
+若不开启正常的身份认证和授权你仍然可以有一个安全的 Storm 集群，但是这通常需要配置操作系统来限制一些操作。即使你打算在集群上开启认证，这也是一个好主意。
 
-The exact detail of how to setup these precautions varies a lot and is beyond
-the scope of this document.
+设置这些防护措施的具体细节非常多，但这超出的本文的内容范围。
 
-It is generally a good idea to enable a firewall and restrict incoming network
-connections to only those originating from the cluster itself and from trusted
-hosts and services, a complete list of ports storm uses are below.
+通常一个好主意是开启防火墙和限制除了来自集群本身、信任的服务器和服务的访问。下文中有 Storm 使用的一个所有端口列表。
 
-If the data your cluster is processing is sensitive it might be best to setup
-IPsec to encrypt all traffic being sent between the hosts in the cluster.
+如果集群处理的数据是敏感的，那么最好使用 IP 加密技术加密所有与集群交互的流量。
 
-### Ports
+### 端口
 
-| Default Port | Storm Config | Client Hosts/Processes | Server |
+| 默认端口 | Storm 配置项 | 客户端 Hosts/进程 | 服务 |
 |--------------|--------------|------------------------|--------|
 | 2181 | `storm.zookeeper.port` | Nimbus, Supervisors, and Worker processes | Zookeeper |
 | 6627 | `nimbus.thrift.port` | Storm clients, Supervisors, and UI | Nimbus |
@@ -42,6 +33,7 @@ IPsec to encrypt all traffic being sent between the hosts in the cluster.
 
 
 ### UI/Logviewer
+
 
 The UI and logviewer processes provide a way to not only see what a cluster is
 doing, but also manipulate running topologies.  In general these processes should
