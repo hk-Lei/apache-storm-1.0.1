@@ -198,17 +198,15 @@ usage: storm jar <my_topology_uber_jar.jar> org.apache.storm.flux.Flux
                               (requires Storm 0.9.3 or later)
 ```
 
-**注意:** Flux tries to avoid command line switch collision with the `storm` command, and allows any other command line
-switches to pass through to the `storm` command.
+**注意:** Flux 努力避免与 `storm` 命令行的冲突，允许使用 `storm` 命令的其他任何命令选项。
 
-For example, you can use the `storm` command switch `-c` to override a topology configuration property. The following
-example command will run Flux and override the `nimbus.seeds` configuration:
+例如：你可以使用 `storm` 命令的 -c 选项去覆盖 topology 的配置项。下述示例命令将运行 Flux 并且覆盖 `nimbus.seeds` 配置：
 
 ```bash
 storm jar myTopology-0.1.0-SNAPSHOT.jar org.apache.storm.flux.Flux --remote my_config.yaml -c 'nimbus.seeds=["localhost"]'
 ```
 
-### Sample output
+### 简单的输出
 ```
 ███████╗██╗     ██╗   ██╗██╗  ██╗
 ██╔════╝██║     ██║   ██║╚██╗██╔╝
@@ -236,9 +234,9 @@ count --SHUFFLE--> log
 Submitting topology: 'shell-topology' to remote cluster...
 ```
 
-## YAML Configuration
-Flux topologies are defined in a YAML file that describes a topology. A Flux topology
-definition consists of the following:
+## YAML 配置项
+
+Flux topologies are defined in a YAML file that describes a topology. A Flux topology definition consists of the following:
 
   1. A topology name
   2. A list of topology "components" (named Java objects that will be made available in the environment)
