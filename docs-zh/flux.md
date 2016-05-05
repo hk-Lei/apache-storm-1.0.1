@@ -473,9 +473,7 @@ FileRotationPolicy rotationPolicy = new FileSizeRotationPolicy(5.0f, Units.MB);
 
 ## 配置 Topology
 
-
-The `config` section is simply a map of Storm topology configuration parameters that will be passed to the
-`org.apache.storm.StormSubmitter` as an instance of the `org.apache.storm.Config` class:
+`config` 部分是 Storm topology 配置参数中的一个简单的键值对，其将被作为 `org.apache.storm.Config` 类的示例传递给 `org.apache.storm.StormSubmitter`：
 
 ```yaml
 config:
@@ -484,24 +482,22 @@ config:
   topology.message.timeout.secs: 30
 ```
 
-# Existing Topologies
-If you have existing Storm topologies, you can still use Flux to deploy/run/test them. This feature allows you to
-leverage Flux Constructor Arguments, References, Properties, and Topology Config declarations for existing topology
-classes.
+# 已存在的 Topologies
 
-The easiest way to use an existing topology class is to define
-a `getTopology()` instance method with one of the following signatures:
+如果你有已存在的 Storm topologies，你也可以使用 Flux 来部署/运行/测试它们。这个特性允许你为现有的 topology 利用 Flux 构造函数参数、引用、属性和 Topology 配置声明。
+
+使用现有的 topology 类最简单的方法是定义一个如下的 `getTopology()` 的实例方法:
 
 ```java
 public StormTopology getTopology(Map<String, Object> config)
 ```
-or:
+或:
 
 ```java
 public StormTopology getTopology(Config config)
 ```
 
-You could then use the following YAML to configure your topology:
+可以使用如下的 YAML 来配置 topology：
 
 ```yaml
 name: "existing-topology"
@@ -509,8 +505,7 @@ topologySource:
   className: "org.apache.storm.flux.test.SimpleTopology"
 ```
 
-If the class you would like to use as a topology source has a different method name (i.e. not `getTopology`), you can
-override it:
+如果你想使用的 topology 类中有不同的方法名(即不是 `getTopology`)，你可以重写它:
 
 ```yaml
 name: "existing-topology"
@@ -519,8 +514,8 @@ topologySource:
   methodName: "getTopologyWithDifferentMethodName"
 ```
 
-**注意：** The specified method must accept a single argument of type `java.util.Map<String, Object>` or
-`org.apache.storm.Config`, and return a `org.apache.storm.generated.StormTopology` object.
+**注意：** 这个指定的方法必须接受一个 `java.util.Map<String, Object>` 或
+`org.apache.storm.Config` 类型的参数，返回一个 `org.apache.storm.generated.StormTopology` 对象。
 
 # YAML DSL
 
