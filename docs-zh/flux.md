@@ -236,33 +236,33 @@ Submitting topology: 'shell-topology' to remote cluster...
 
 ## YAML 配置项
 
-Flux topologies are defined in a YAML file that describes a topology. A Flux topology definition consists of the following:
+在 YAML 文件中定义（或描述） Flux topology，一个 Flux topology 由以下部件组成：
 
-  1. A topology name
-  2. A list of topology "components" (named Java objects that will be made available in the environment)
-  3. **EITHER** (A DSL topology definition):
-      * A list of spouts, each identified by a unique ID
-      * A list of bolts, each identified by a unique ID
-      * A list of "stream" objects representing a flow of tuples between spouts and bolts
-  4. **OR** (A JVM class that can produce a `org.apache.storm.generated.StormTopology` instance:
-      * A `topologySource` definition.
+  1. 一个 topology 名称
+  2. topology 的 "组件(components)" 列表(将在环境中可用的 Java 对象)
+  3. **EITHER** (DSL topology 定义):
+      * spouts 列表，每个需要一个唯一的 ID 标识
+      * bolts 列表，每个需要一个唯一的 ID 标识
+      * "stream" 列表，代表了在 spouts 和 bolts 间传输的 tuples 流
+  4. **OR** (可用产生 `org.apache.storm.generated.StormTopology` 实例的 JVM 类):
+      * 一个 `topologySource` 定义.
 
+**译注：** 3、4 二选一。
 
-
-For example, here is a simple definition of a wordcount topology using the YAML DSL:
+例如，这有一个使用 YAML DSL 简单定义的单词统计的 topology：
 
 ```yaml
 name: "yaml-topology"
 config:
   topology.workers: 1
 
-# spout definitions
+# 定义 spouts
 spouts:
   - id: "spout-1"
     className: "org.apache.storm.testing.TestWordSpout"
     parallelism: 1
 
-# bolt definitions
+# 定义 bolts
 bolts:
   - id: "bolt-1"
     className: "org.apache.storm.testing.TestWordCounter"
@@ -271,9 +271,9 @@ bolts:
     className: "org.apache.storm.flux.wrappers.bolts.LogInfoBolt"
     parallelism: 1
 
-#stream definitions
+# 定义数据流
 streams:
-  - name: "spout-1 --> bolt-1" # name isn't used (placeholder for logging, UI, etc.)
+  - name: "spout-1 --> bolt-1" # 名称目前没有被使用 (logging、UI 等的占位符)
     from: "spout-1"
     to: "bolt-1"
     grouping:
@@ -288,28 +288,25 @@ streams:
 
 
 ```
-## Property Substitution/Filtering
-It's common for developers to want to easily switch between configurations, for example switching deployment between
-a development environment and a production environment. This can be accomplished by using separate YAML configuration
-files, but that approach would lead to unnecessary duplication, especially in situations where the Storm topology
-does not change, but configuration settings such as host names, ports, and parallelism paramters do.
+## 替换/过滤属性
 
-For this case, Flux offers properties filtering to allow you two externalize values to a `.properties` file and have
-them substituted before the `.yaml` file is parsed.
+通常开发者希望在不同配置之间切换自如，例如在开发环境和生产环境间的切换部署。这个可以使用不同的 YAML 配置文件来完成，但是这种方法导致了不必要的重复，尤其是在 Storm topology 没有改变的情况下，改变主机名、端口和并行度等配置。
 
-To enable property filtering, use the `--filter` command line option and specify a `.properties` file. For example,
-if you invoked flux like so:
+在这种情况下，Flux 提供了属性过滤允许将不同的值外部化到不同的 `.properties` 文件中，在解析 `.yaml` 文件前替换他们。
+
+使用 `--filter` 命令选项来启用属性过滤。例如，可以这样调用 Flux：
 
 ```bash
 storm jar myTopology-0.1.0-SNAPSHOT.jar org.apache.storm.flux.Flux --local my_config.yaml --filter dev.properties
 ```
-With the following `dev.properties` file:
+
+使用如下的 `dev.properties` 文件：
 
 ```properties
 kafka.zookeeper.hosts: localhost:2181
 ```
 
-You would then be able to reference those properties by key in your `.yaml` file using `${}` syntax:
+可以在 `.yaml` 文件中使用 `${}` 语法通过 key 引用那些属性值：
 
 ```yaml
   - id: "zkHosts"
@@ -318,17 +315,16 @@ You would then be able to reference those properties by key in your `.yaml` file
       - "${kafka.zookeeper.hosts}"
 ```
 
-In this case, Flux would replace `${kafka.zookeeper.hosts}` with `localhost:2181` before parsing the YAML contents.
+这样，在解析 YAML 内容之前 Flux 将使用 `localhost:2181` 替换 `${kafka.zookeeper.hosts}`。
 
-### Environment Variable Substitution/Filtering
-Flux also allows environment variable substitution. For example, if an environment variable named `ZK_HOSTS` if defined,
-you can reference it in a Flux YAML file with the following syntax:
+### 替换/过滤环境变量
+Flux 也运行替换环境变量。例如，定义了一个环境变量名为 `ZK_HOSTS`，可以在 Flux YAML 中用如下的语法引用它：
 
 ```
 ${ENV-ZK_HOSTS}
 ```
 
-## Components
+## 组件
 Components are essentially named object instances that are made available as configuration options for spouts and
 bolts. If you are familiar with the Spring framework, components are roughly analagous to Spring beans.
 
@@ -356,7 +352,7 @@ object by calling the constructor that takes a single string as an argument:
       - "localhost:2181"
 ```
 
-####References
+#### 引用
 Each component instance is identified by a unique id that allows it to be used/reused by other components. To
 reference an existing component, you specify the id of the component with the `ref` tag.
 
@@ -475,7 +471,9 @@ The above definition is functionally equivalent to the following Java code:
 FileRotationPolicy rotationPolicy = new FileSizeRotationPolicy(5.0f, Units.MB);
 ```
 
-## Topology Config
+## 配置 Topology
+
+
 The `config` section is simply a map of Storm topology configuration parameters that will be passed to the
 `org.apache.storm.StormSubmitter` as an instance of the `org.apache.storm.Config` class:
 
@@ -521,34 +519,33 @@ topologySource:
   methodName: "getTopologyWithDifferentMethodName"
 ```
 
-__N.B.:__ The specified method must accept a single argument of type `java.util.Map<String, Object>` or
+**注意：** The specified method must accept a single argument of type `java.util.Map<String, Object>` or
 `org.apache.storm.Config`, and return a `org.apache.storm.generated.StormTopology` object.
 
 # YAML DSL
-## Spouts and Bolts
-Spout and Bolts are configured in their own respective section of the YAML configuration. Spout and Bolt definitions
-are extensions to the `component` definition that add a `parallelism` parameter that sets the parallelism  for a
-component when the topology is deployed.
 
-Because spout and bolt definitions extend `component` they support constructor arguments, references, and properties as
-well.
+## Spouts 和 Bolts
 
-Shell spout example:
+YAML 配置中，Spout 和 Bolt 分别在他们自己的配置项中。`component` 的定义由 Spout 和 Bolt 的定义组成，通过添加 `parallelism` 参数来设置部署 topology 时组件的并行度。
+
+由于 spout 和 bolt 的定义继承自 `component`，所以他们也支持构造函数参数、引用和属性。
+
+Shell spout 示例：
 
 ```yaml
 spouts:
   - id: "sentence-spout"
     className: "org.apache.storm.flux.spouts.GenericShellSpout"
-    # shell spout constructor takes 2 arguments: String[], String[]
+    # shell spout 的构造函数需要 2 个参数: String[], String[]
     constructorArgs:
-      # command line
+      # 命令行
       - ["node", "randomsentence.js"]
-      # output fields
+      # 输出 fields
       - ["word"]
     parallelism: 1
 ```
 
-Kafka spout example:
+Kafka spout 示例:
 
 ```yaml
 components:
@@ -565,7 +562,7 @@ components:
     constructorArgs:
       - "localhost:2181"
 
-# Alternative kafka config
+# 可选的 kafka 配置
 #  - id: "kafkaConfig"
 #    className: "org.apache.storm.kafka.KafkaConfig"
 #    constructorArgs:
@@ -573,7 +570,7 @@ components:
 #      - ref: "zkHosts"
 #      # topic
 #      - "myKafkaTopic"
-#      # clientId (optional)
+#      # clientId (可选)
 #      - "myKafkaClientId"
 
   - id: "spoutConfig"
@@ -596,7 +593,7 @@ components:
 config:
   topology.workers: 1
 
-# spout definitions
+# 定义 spout
 spouts:
   - id: "kafka-spout"
     className: "org.apache.storm.kafka.KafkaSpout"
@@ -605,17 +602,17 @@ spouts:
 
 ```
 
-Bolt Examples:
+Bolt 示例:
 
 ```yaml
-# bolt definitions
+# 定义 bolt
 bolts:
   - id: "splitsentence"
     className: "org.apache.storm.flux.bolts.GenericShellBolt"
     constructorArgs:
-      # command line
+      # 命令行
       - ["python", "splitsentence.py"]
-      # output fields
+      # 输出 fields
       - ["word"]
     parallelism: 1
     # ...
@@ -630,31 +627,31 @@ bolts:
     parallelism: 1
     # ...
 ```
-## Streams and Stream Groupings
-Streams in Flux are represented as a list of connections (Graph edges, data flow, etc.) between the Spouts and Bolts in
-a topology, with an associated Grouping definition.
+## 流和分组
 
-A Stream definition has the following properties:
+Flux 中的流可以被描绘成 Topology 中 Spouts 和 Bolts 间的一系列连接 (图的边、数据流等)，其有一个相应的分组定义。
 
-**`name`:** A name for the connection (optional, currently unused)
+流定义包含下列属性：
 
-**`from`:** The `id` of a Spout or Bolt that is the source (publisher)
+**`name`:** 连接的名称(可选，目前未使用)
 
-**`to`:** The `id` of a Spout or Bolt that is the destination (subscriber)
+**`from`:** Spout 或 Bolt 源(发布者)的 `id`
 
-**`grouping`:** The stream grouping definition for the Stream
+**`to`:** Spout 或 Bolt 目的地(订阅者)的 `id`
 
-A Grouping definition has the following properties:
+**`grouping`:** 流分组定义
 
-**`type`:** The type of grouping. One of `ALL`,`CUSTOM`,`DIRECT`,`SHUFFLE`,`LOCAL_OR_SHUFFLE`,`FIELDS`,`GLOBAL`, or `NONE`.
+分组定义包含下列属性：
 
-**`streamId`:** The Storm stream ID (Optional. If unspecified will use the default stream)
+**`type`:** 分组类型： `ALL`、`CUSTOM`、`DIRECT`、`SHUFFLE`、`LOCAL_OR_SHUFFLE`、`FIELDS`、`GLOBAL` 或 `NONE`其中之一。
 
-**`args`:** For the `FIELDS` grouping, a list of field names.
+**`streamId`:** Storm 流 ID (可选。如果没指明将使用默认的 default )
 
-**`customClass`** For the `CUSTOM` grouping, a definition of custom grouping class instance
+**`args`:** 面向 `FIELDS` 分组的字段名列表。
 
-The `streams` definition example below sets up a topology with the following wiring:
+**`customClass`** 面向 `CUSTOM` 分组的自定义分组类。
+
+下例中的 `streams` 定义使用如下的连接建立了一个 Topology：
 
 ```
     kafka-spout --> splitsentence --> count --> log
@@ -662,13 +659,13 @@ The `streams` definition example below sets up a topology with the following wir
 
 
 ```yaml
-#stream definitions
-# stream definitions define connections between spouts and bolts.
-# note that such connections can be cyclical
-# custom stream groupings are also supported
+# 流定义
+# 流定义就是定义 spouts 和 bolts 之间的连接
+# 注意这种连接可以是周期性的
+# 自定义流分组也是支持的
 
 streams:
-  - name: "kafka --> split" # name isn't used (placeholder for logging, UI, etc.)
+  - name: "kafka --> split" # 名称目前没有被使用 (logging、UI 等的占位符)
     from: "kafka-spout"
     to: "splitsentence"
     grouping:
@@ -688,13 +685,10 @@ streams:
       type: SHUFFLE
 ```
 
-### Custom Stream Groupings
-Custom stream groupings are defined by setting the grouping type to `CUSTOM` and defining a `customClass` parameter
-that tells Flux how to instantiate the custom class. The `customClass` definition extends `component`, so it supports
-constructor arguments, references, and properties as well.
+### 自定义流分组
+自定义流分组的定义通过设置分组类型为 `CUSTOM` 和定义一个 `customClass` 参数，告诉 Flux 如何自定义类实例化。`customClass` 定义继承自 `component`，所以它也支持构造函数参数、引用和属性。
 
-The example below creates a Stream with an instance of the `org.apache.storm.testing.NGrouping` custom stream grouping
-class.
+下例中使用了一个自定义流分组类 `org.apache.storm.testing.NGrouping` 创建了一个流：
 
 ```yaml
   - name: "bolt-1 --> bolt2"
@@ -708,11 +702,11 @@ class.
           - 1
 ```
 
-## Includes and Overrides
-Flux allows you to include the contents of other YAML files, and have them treated as though they were defined in the
-same file. Includes may be either files, or classpath resources.
+## Includes 和 Overrides
 
-Includes are specified as a list of maps:
+Flux 允许包含其他的 YAML 文件，就像在同一个文件中定义一样。包含的可以是文件，也可以是 classpath 资源。
+
+Includes 指定为一个键值对列表:
 
 ```yaml
 includes:
@@ -721,21 +715,17 @@ includes:
     override: false
 ```
 
-If the `resource` property is set to `true`, the include will be loaded as a classpath resource from the value of the
-`file` attribute, otherwise it will be treated as a regular file.
+如果 `resource` 属性设置为 `true`，通过 `file` 属性的值将加载 classpath 资源，否则其将被视为一个正常的文件。
 
-The `override` property controls how includes affect the values defined in the current file. If `override` is set to
-`true`, values in the included file will replace values in the current file being parsed. If `override` is set to
-`false`, values in the current file being parsed will take precedence, and the parser will refuse to replace them.
+`override` 属性控制如何有效的包含在当前文件中定义的值。如果 `override` 设置为 `true`, 解析时 `file` 文件中包含的值将会替换当前文件中的值； `override` 设置为 `false`, 当前文件中的值的解析优先级高，解析器将拒绝替换他们。
 
-**N.B.:** Includes are not yet recursive. Includes from included files will be ignored.
+**注意:** Includes 目前还不是递归的，包含文件中的 Includes 将会被忽略。
 
+## Word Count 示例
 
-## Basic Word Count Example
+这个示例使用里一个 JavaScript 实现的 spout、一个 Python 实现的 bolt、和一个 Java 实现的 bolt。
 
-This example uses a spout implemented in JavaScript, a bolt implemented in Python, and a bolt implemented in Java
-
-Topology YAML config:
+Topology YAML 配置:
 
 ```yaml
 ---
@@ -743,26 +733,26 @@ name: "shell-topology"
 config:
   topology.workers: 1
 
-# spout definitions
+# 定义 spout
 spouts:
   - id: "sentence-spout"
     className: "org.apache.storm.flux.spouts.GenericShellSpout"
-    # shell spout constructor takes 2 arguments: String[], String[]
+    # shell spout 的构造函数需要 2 个参数: String[], String[]
     constructorArgs:
-      # command line
+      # 命令行
       - ["node", "randomsentence.js"]
-      # output fields
+      # 输出 fields
       - ["word"]
     parallelism: 1
 
-# bolt definitions
+# 定义 bolt
 bolts:
   - id: "splitsentence"
     className: "org.apache.storm.flux.bolts.GenericShellBolt"
     constructorArgs:
-      # command line
+      # 命令行
       - ["python", "splitsentence.py"]
-      # output fields
+      # 输出 fields
       - ["word"]
     parallelism: 1
 
@@ -774,13 +764,13 @@ bolts:
     className: "org.apache.storm.testing.TestWordCounter"
     parallelism: 1
 
-#stream definitions
-# stream definitions define connections between spouts and bolts.
-# note that such connections can be cyclical
-# custom stream groupings are also supported
+# 流定义
+# 流定义就是定义 spouts 和 bolts 之间的连接
+# 注意这种连接可以是周期性的
+# 自定义流分组也是支持的
 
 streams:
-  - name: "spout --> split" # name isn't used (placeholder for logging, UI, etc.)
+  - name: "spout --> split" # 名称目前没有被使用 (logging、UI 等的占位符)
     from: "sentence-spout"
     to: "splitsentence"
     grouping:
@@ -801,10 +791,11 @@ streams:
 ```
 
 
-## Micro-Batching (Trident) API Support
-Currenty, the Flux YAML DSL only supports the Core Storm API, but support for Storm's micro-batching API is planned.
+## 微批处理 (Trident) API
 
-To use Flux with a Trident topology, define a topology getter method and reference it in your YAML config:
+目前，Flux YAML DSL 只支持 Storm 核心 API，但对 Storm 微批处理的 API 支持在计划中。
+
+如果在 Trident topology 中使用 Flux ，可以定义一个 topology getter 方法，在 YAML 配置中引用它：
 
 ```yaml
 name: "my-trident-topology"
@@ -814,6 +805,6 @@ config:
 
 topologySource:
   className: "org.apache.storm.flux.test.TridentTopologySource"
-  # Flux will look for "getTopology", this will override that.
+  # Flux 默认将会调用 "getTopology" 方法，下列方法名会覆盖它。
   methodName: "getTopologyWithDifferentMethodName"
 ```
