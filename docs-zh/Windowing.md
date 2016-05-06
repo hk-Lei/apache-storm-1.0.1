@@ -151,11 +151,9 @@ public BaseWindowedBolt withLag(Duration duration)
 
 ### Watermarks
 
-对于指定时间字段的 tuples
+对于有时间字段的 tuples 的处理，Storm 内部是基于传入 tuple 的时间戳字段计算 watermarks 的。Watermark 是所有输入流中的最新 tuple 的最小时间戳(减去延迟)。
 For processing tuples with timestamp field, storm internally computes watermarks based on the incoming tuple timestamp. Watermark is
-the minimum of the latest tuple t
-imestamps (minus the lag) across all the input streams. At a higher level this is similar to the watermark concept
-used by Flink and Google's MillWheel for tracking event based timestamps.
+the minimum of the latest tuple timestamps (minus the lag) across all the input streams. At a higher level this is similar to the watermark conceptused by Flink and Google's MillWheel for tracking event based timestamps.
 
 Periodically (default every sec), the watermark timestamps are emitted and this is considered as the clock tick for the window calculation if
 tuple based timestamps are in use. The interval at which watermarks are emitted can be changed with the below api.
