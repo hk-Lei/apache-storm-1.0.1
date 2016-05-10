@@ -325,12 +325,10 @@ ${ENV-ZK_HOSTS}
 ```
 
 ## 组件
-Components are essentially named object instances that are made available as configuration options for spouts and
-bolts. If you are familiar with the Spring framework, components are roughly analagous to Spring beans.
 
-Every component is identified, at a minimum, by a unique identifier (String) and a class name (String). For example,
-the following will make an instance of the `org.apache.storm.kafka.StringScheme` class available as a reference under the key
-`"stringScheme"` . This assumes the `org.apache.storm.kafka.StringScheme` has a default constructor.
+组件实质上是配置项中的 spouts 和 bolts 对象实例，如果熟悉 Spring 框架的话，组件可以类比 Spring beans。
+
+每个组件至少有一个唯一的标识符（字符串）和类名(字符串)标识。例如，以下将创建一个 `org.apache.storm.kafka.StringScheme` 类的实例作为键 `"stringScheme"` 的引用，假设 `org.apache.storm.kafka.StringScheme` 类有一个默认的构造方法。
 
 ```yaml
 components:
@@ -338,12 +336,10 @@ components:
     className: "org.apache.storm.kafka.StringScheme"
 ```
 
-### Contructor Arguments, References, Properties and Configuration Methods
+### 构造参数、引用、属性和配置方法
 
-####Constructor Arguments
-Arguments to a class constructor can be configured by adding a `contructorArgs` element to a components.
-`constructorArgs` is a list of objects that will be passed to the class' constructor. The following example creates an
-object by calling the constructor that takes a single string as an argument:
+#### 构造参数
+可以通过在组件中添加一个 `contructorArgs` 元素来配置组件类构造方法的参数。 `contructorArgs` 是一个传递给类的构造函数的对象列表。下面示例中通过调用接收一个字符串的构造函数创建了一个对象。
 
 ```yaml
   - id: "zkHosts"
@@ -353,11 +349,9 @@ object by calling the constructor that takes a single string as an argument:
 ```
 
 #### 引用
-Each component instance is identified by a unique id that allows it to be used/reused by other components. To
-reference an existing component, you specify the id of the component with the `ref` tag.
+每个组件示例是由一个唯一的 id 标识的，其允许被其他组件使用/重用。引用现有的组件，需要使用 `ref` 标签指定组件的 id。
 
-In the following example, a component with the id `"stringScheme"` is created, and later referenced, as a an argument
-to another component's constructor:
+在下例中，创建了一个 id 为 `"stringScheme"` 的组件，然后作为另一个组件构造方法的参数被引用。
 
 ```yaml
 components:
@@ -367,13 +361,12 @@ components:
   - id: "stringMultiScheme"
     className: "org.apache.storm.spout.SchemeAsMultiScheme"
     constructorArgs:
-      - ref: "stringScheme" # component with id "stringScheme" must be declared above.
+      - ref: "stringScheme" # id 为 "stringScheme" 的组件必须在上面已经声明了
 ```
-**N.B.:** References can only be used after (below) the object they point to has been declared.
+**注意:** 引用只能在被声明的对象下面使用。
 
-####Properties
-In addition to calling constructors with different arguments, Flux also allows you to configure components using
-JavaBean-like setter methods and fields declared as `public`:
+#### 属性
+除了支持调用不同参数的构造方法之外，Flux 还允许使用类似 JavaBean 的 setter 方法来配置组件，字段需声明为 `public`：
 
 ```yaml
   - id: "spoutConfig"
@@ -394,19 +387,14 @@ JavaBean-like setter methods and fields declared as `public`:
         ref: "stringMultiScheme"
 ```
 
-In the example above, the `properties` declaration will cause Flux to look for a public method in the `SpoutConfig` with
-the signature `setForceFromStart(boolean b)` and attempt to invoke it. If a setter method is not found, Flux will then
-look for a public instance variable with the name `ignoreZkOffsets` and attempt to set its value.
+在上述示例中，`properties` 声明会致使 Flux 在 `SpoutConfig` 中去寻找一个 public 方法 `setForceFromStart(boolean b)` 并尝试调用它。如果 setter 方法没找到，Flux 会再去寻找一个名为 `ignoreZkOffsets` 的 public 实例变量并尝试设置其值。
 
-References may also be used as property values.
+引用也可以作为属性的值。
 
-####Configuration Methods
-Conceptually, configuration methods are similar to Properties and Constructor Args -- they allow you to invoke an
-arbitrary method on an object after it is constructed. Configuration methods are useful for working with classes that
-don't expose JavaBean methods or have constructors that can fully configure the object. Common examples include classes
-that use the builder pattern for configuration/composition.
+#### 配置方法
+从概念上讲，配置方法类似于属性和构造参数 -- 他们允许你在一个对象被构造后调用一个任意的方法。配置方法对于处理类是很有用的，不用暴露 JavaBean 方法和构造器就可以完全配置一个对象。常见的例子包括类都使用建造者模式 (`builder pattern`) 配置/构成。
 
-The following YAML example creates a bolt and configures it by calling several methods:
+下述的 YAML 示例创建了一个 bolt 并配置其调用一些方法：
 
 ```yaml
 bolts:
@@ -426,7 +414,7 @@ bolts:
           - "bar"
 ```
 
-The signatures of the corresponding methods are as follows:
+相应的方法声明如下：
 
 ```java
     public void withFoo(String foo);
@@ -434,13 +422,12 @@ The signatures of the corresponding methods are as follows:
     public void withFooBar(String foo, String bar);
 ```
 
-Arguments passed to configuration methods work much the same way as constructor arguments, and support references as
-well.
+传递给配置方法的参数同构造函数参数工作方式相同，也支持引用。
 
-### Using Java `enum`s in Contructor Arguments, References, Properties and Configuration Methods
-You can easily use Java `enum` values as arguments in a Flux YAML file, simply by referencing the name of the `enum`.
+### 在构造参数、引用、属性和配置方法中使用 Java 枚举 (`enum`)
+在 Flux YAML 文件中可以很容易的使用 Java 枚举的值作为参数，只需引用 `enum` 即可。
 
-For example, [Storm's HDFS module]() includes the following `enum` definition (simplified for brevity):
+例如，[Storm 的 HDFS 模块]() 包含以下枚举定义（简写）：
 
 ```java
 public static enum Units {
@@ -448,13 +435,13 @@ public static enum Units {
 }
 ```
 
-And the `org.apache.storm.hdfs.bolt.rotation.FileSizeRotationPolicy` class has the following constructor:
+`org.apache.storm.hdfs.bolt.rotation.FileSizeRotationPolicy` 类有如下的构造方法:
 
 ```java
 public FileSizeRotationPolicy(float count, Units units)
-
 ```
-The following Flux `component` definition could be used to call the constructor:
+
+下面的 Flux `component` 定义可以被用来调用构造函数:
 
 ```yaml
   - id: "rotationPolicy"
@@ -464,10 +451,10 @@ The following Flux `component` definition could be used to call the constructor:
       - MB
 ```
 
-The above definition is functionally equivalent to the following Java code:
+上述定义的功能相当于如下的 Java 代码:
 
 ```java
-// rotate files when they reach 5MB
+// 当文件达到 5 MB 时切文件
 FileRotationPolicy rotationPolicy = new FileSizeRotationPolicy(5.0f, Units.MB);
 ```
 
