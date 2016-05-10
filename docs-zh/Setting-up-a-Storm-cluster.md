@@ -3,42 +3,45 @@ title: Setting up a Storm Cluster
 layout: documentation
 documentation: true
 ---
-This page outlines the steps for getting a Storm cluster up and running. If you're on AWS, you should check out the [storm-deploy](https://github.com/nathanmarz/storm-deploy/wiki) project. [storm-deploy](https://github.com/nathanmarz/storm-deploy/wiki) completely automates the provisioning, configuration, and installation of Storm clusters on EC2. It also sets up Ganglia for you so you can monitor CPU, disk, and network usage.
+文中部分内容来自[weyo/Storm-Documents](https://github.com/weyo/Storm-Documents/blob/master/Manual/zh/Setting-Up-A-Storm-Cluster.md)
 
-If you run into difficulties with your Storm cluster, first check for a solution is in the [Troubleshooting](Troubleshooting.html) page. Otherwise, email the mailing list.
+本文详细介绍了 Storm 集群的安装配置方法。如果需要在 AWS 上安装 Storm，你应该看一下 [storm-deploy](https://github.com/nathanmarz/storm-deploy/wiki) 项目。[storm-deploy](https://github.com/nathanmarz/storm-deploy/wiki) 可以自动完成 E2 上 Storm 集群的准备、配置、安装的全部过程，同时还设置好了 Ganglia，方便监控 CPU、磁盘以及网络的使用信息。
 
-Here's a summary of the steps for setting up a Storm cluster:
+如果你在使用 Storm 集群时遇到问题，请先查看 [Troubleshooting](Troubleshooting.html) 一文中是否已有相应的解决方案。如果检索不到有效的解决方法，请向社区的邮件列表发送关于问题的邮件。
 
-1. Set up a Zookeeper cluster
-2. Install dependencies on Nimbus and worker machines
-3. Download and extract a Storm release to Nimbus and worker machines
-4. Fill in mandatory configurations into storm.yaml
-5. Launch daemons under supervision using "storm" script and a supervisor of your choice
+以下是安装 Storm 的步骤：
 
-### Set up a Zookeeper cluster
+1. 安装 ZooKeeper 集群；
+2. 在各个机器上安装运行集群所需要的依赖组件；
+3. 下载 Storm 安装程序并解压缩到集群的各个机器上；
+4. 在 storm.yaml 中添加集群配置信息；
+5. 使用 `storm` 脚本启动各机器后台进程。
 
-Storm uses Zookeeper for coordinating the cluster. Zookeeper **is not** used for message passing, so the load Storm places on Zookeeper is quite low. Single node Zookeeper clusters should be sufficient for most cases, but if you want failover or are deploying large Storm clusters you may want larger Zookeeper clusters. Instructions for deploying Zookeeper are [here](http://zookeeper.apache.org/doc/r3.3.3/zookeeperAdmin.html). 
+### 安装 ZooKeeper 集群
+
+Storm 使用 ZooKeeper 来保证集群的一致性。集群中 ZooKeeper 并不是用来进行消息传递的，所以 Storm 对 ZooKeeper 的负载相当低。虽然在大部分场景下单点 ZooKeeper 也勉强够用，但是如果你需要更可靠的 HA 机制或者需要部署大规模 Storm 集群，你最好配置一个 ZooKeeper 集群。ZooKeeper 集群的部署说明请参考[此文](http://zookeeper.apache.org/doc/r3.3.3/zookeeperAdmin.html)。
+
+关于 ZooKeeper 部署的几点说明：
 
 A few notes about Zookeeper deployment:
 
-1. It's critical that you run Zookeeper under supervision, since Zookeeper is fail-fast and will exit the process if it encounters any error case. See [here](http://zookeeper.apache.org/doc/r3.3.3/zookeeperAdmin.html#sc_supervision) for more details. 
-2. It's critical that you set up a cron to compact Zookeeper's data and transaction logs. The Zookeeper daemon does not do this on its own, and if you don't set up a cron, Zookeeper will quickly run out of disk space. See [here](http://zookeeper.apache.org/doc/r3.3.3/zookeeperAdmin.html#sc_maintenance) for more details.
+1. ZooKeeper 必须在监控模式下运行。因为 ZooKeeper 是个快速失败系统，如果遇到了故障，ZooKeeper 服务会主动关闭。更多详细信息请参考[此文](http://zookeeper.apache.org/doc/r3.3.3/zookeeperAdmin.html#sc_supervision) 。
+2. 需要设置一个 cron 服务来定时压缩 ZooKeeper 的数据与事务日志。因为 ZooKeeper 的后台进程不会处理这个问题，如果不配置 cron，ZooKeeper 的日志会很快填满磁盘空间。更多详细信息请参考[此文](http://zookeeper.apache.org/doc/r3.3.3/zookeeperAdmin.html#sc_maintenance)。
 
-### Install dependencies on Nimbus and worker machines
+### 安装必要的依赖组件
 
-Next you need to install Storm's dependencies on Nimbus and the worker machines. These are:
+接下来你需要在集群中的所有机器上安装必要的依赖组件，包括：
 
 1. Java 6
 2. Python 2.6.6
 
-These are the versions of the dependencies that have been tested with Storm. Storm may or may not work with different versions of Java and/or Python.
+以上均为在 Storm 上测试通过的版本。Storm 并不保证对其他版本的 Java 或 Python 的支持。
 
+### 下载 Storm 安装程序并解压
 
-### Download and extract a Storm release to Nimbus and worker machines
+接下来就要下载需要的 Storm 发行版，并将 zip 安装文件解压缩到集群中的各个机器上。Storm 的发行版可以在[这里下载](http://github.com/apache/storm/releases)。
 
-Next, download a Storm release and extract the zip file somewhere on Nimbus and each of the worker machines. The Storm releases can be downloaded [from here](http://github.com/apache/storm/releases).
-
-### Fill in mandatory configurations into storm.yaml
+### 配置 storm.yaml
 
 The Storm release contains a file at `conf/storm.yaml` that configures the Storm daemons. You can see the default configuration values [here]({{page.git-blob-base}}/conf/defaults.yaml). storm.yaml overrides anything in defaults.yaml. There's a few configurations that are mandatory to get a working cluster:
 
@@ -84,7 +87,7 @@ supervisor.slots.ports:
 
 ### Monitoring Health of Supervisors
 
-Storm provides a mechanism by which administrators can configure the supervisor to run administrator supplied scripts periodically to determine if a node is healthy or not. Administrators can have the supervisor determine if the node is in a healthy state by performing any checks of their choice in scripts located in storm.health.check.dir. If a script detects the node to be in an unhealthy state, it must print a line to standard output beginning with the string ERROR. The supervisor will periodically run the scripts in the health check dir and check the output. If the script’s output contains the string ERROR, as described above, the supervisor will shut down any workers and exit. 
+Storm provides a mechanism by which administrators can configure the supervisor to run administrator supplied scripts periodically to determine if a node is healthy or not. Administrators can have the supervisor determine if the node is in a healthy state by performing any checks of their choice in scripts located in storm.health.check.dir. If a script detects the node to be in an unhealthy state, it must print a line to standard output beginning with the string ERROR. The supervisor will periodically run the scripts in the health check dir and check the output. If the script’s output contains the string ERROR, as described above, the supervisor will shut down any workers and exit.
 
 If the supervisor is running with supervision "/bin/storm node-health-check" can be called to determine if the supervisor should be launched or if the node is unhealthy.
 
@@ -112,6 +115,6 @@ The last step is to launch all the Storm daemons. It is critical that you run ea
 
 1. **Nimbus**: Run the command "bin/storm nimbus" under supervision on the master machine.
 2. **Supervisor**: Run the command "bin/storm supervisor" under supervision on each worker machine. The supervisor daemon is responsible for starting and stopping worker processes on that machine.
-3. **UI**: Run the Storm UI (a site you can access from the browser that gives diagnostics on the cluster and topologies) by running the command "bin/storm ui" under supervision. The UI can be accessed by navigating your web browser to http://{ui host}:8080. 
+3. **UI**: Run the Storm UI (a site you can access from the browser that gives diagnostics on the cluster and topologies) by running the command "bin/storm ui" under supervision. The UI can be accessed by navigating your web browser to http://{ui host}:8080.
 
 As you can see, running the daemons is very straightforward. The daemons will log to the logs/ directory in wherever you extracted the Storm release.

@@ -4,82 +4,85 @@ layout: documentation
 documentation: true
 ---
 
-This page lists issues people have run into when using Storm along with their solutions.
+本文中大部分内容来自[weyo/Storm-Documents](https://github.com/weyo/Storm-Documents/blob/master/Manual/zh/Troubleshooting.md)。
 
-### Worker processes are crashing on startup with no stack trace
+本文介绍了用户在使用 Storm 过程中遇到的问题与相应的解决方法。
 
-Possible symptoms:
- 
- * Topologies work with one node, but workers crash with multiple nodes
+### Worker 进程在启动时挂掉而没有留下堆栈跟踪信息的问题
 
-Solutions:
+可能出现的现象：
 
- * You may have a misconfigured subnet, where nodes can't locate other nodes based on their hostname. ZeroMQ sometimes crashes the process when it can't resolve a host. There are two solutions:
-  * Make a mapping from hostname to IP address in /etc/hosts
-  * Set up an internal DNS so that nodes can locate each other based on hostname.
-  
-### Nodes are unable to communicate with each other
+ * 拓扑在一个节点上运行正常，但是多个 worker 进程在多个节点上就会崩溃
 
-Possible symptoms:
+解决方案：
 
- * Every spout tuple is failing
- * Processing is not working
+ * 你的网络配置可能有问题，导致每个节点无法根据 hostname 连接到其他的节点。ZeroMQ 有时会在不能识别 host 的时候挂掉 进程。如果是这种情况，有两种可行的解决方案：
+  * 在 /etc/hosts 文件中配置好 hostname 与 IP 的对应关系。
+  * 设置一个局域网 DNS 服务器，使得节点可以根据 hostname 定位到其他节点。
 
-Solutions:
+### 节点之间无法通信
 
- * Storm doesn't work with ipv6. You can force ipv4 by adding `-Djava.net.preferIPv4Stack=true` to the supervisor child options and restarting the supervisor. 
- * You may have a misconfigured subnet. See the solutions for `Worker processes are crashing on startup with no stack trace`
+可能出现的现象：
 
-### Topology stops processing tuples after awhile
+ * 每个 spout tuple 的处理都不成功
+ * 拓扑中的处理过程不起作用
 
-Symptoms:
+解决方案：
 
- * Processing works fine for awhile, and then suddenly stops and spout tuples start failing en masse. 
- 
-Solutions:
+ * Storm 不支持 ipv6，你可以在 supervisor 的 child-opts 配置中添加 `-Djava.net.preferIPv4Stack=true` 参数强制使用 ipv4，然后重启 supervisor。
+ * 你的网络配置可能存在问题，请参考上个问题 `Worker 进程在启动时挂掉而没有留下堆栈跟踪信息的问题` 中的解决方案。
 
- * This is a known issue with ZeroMQ 2.1.10. Downgrade to ZeroMQ 2.1.7.
- 
-### Not all supervisors appear in Storm UI
+### 拓扑在一段时间后停止了 tuple 的处理过程
 
-Symptoms:
- 
- * Some supervisor processes are missing from the Storm UI
- * List of supervisors in Storm UI changes on refreshes
+可能出现的现象：
 
-Solutions:
+ * 拓扑正常运行一段时间后突然停止了数据处理过程，并且 spout 的 tuple 一起开始处理失败
 
- * Make sure the supervisor local dirs are independent (e.g., not sharing a local dir over NFS)
- * Try deleting the local dirs for the supervisors and restarting the daemons. Supervisors create a unique id for themselves and store it locally. When that id is copied to other nodes, Storm gets confused. 
+解决方案：
 
-### "Multiple defaults.yaml found" error
+ * 这是 ZeroMQ 2.1.10 中的一个已经确认的问题，请将 ZMQ 降级到 2.1.7 版本。
 
-Symptoms:
+### Storm UI 中没有显示出所有的 supervisor 信息
 
- * When deploying a topology with "storm jar", you get this error
 
-Solution:
+可能出现的现象：
 
- * You're most likely including the Storm jars inside your topology jar. When packaging your topology jar, don't include the Storm jars as Storm will put those on the classpath for you.
+ * Storm UI 中缺少部分 supervisor 的信息
+ * 在刷新 Storm UI 页面后 supervisor 列表会变化
 
-### "NoSuchMethodError" when running storm jar
+解决方案：
 
-Symptoms:
+ * 确保 supervisor 的本地工作目录是相互独立的 (即不要出现在 NFS 中共享同一个目录的情况)
+ * 尝试删除 supervisor 的本地工作目录，然后重启 supervisor 后台进程。supervisor 启动时会为自己创建一个唯一的 id 并存储在本地目录中。如果这个 id 被复制到其他节点中，就会让 Storm 无法确定哪个 supervisor 正在运行。
 
- * When running storm jar, you get a cryptic "NoSuchMethodError"
+### "Multiple defaults.yaml found" 错误
 
-Solution:
 
- * You're deploying your topology with a different version of Storm than you built your topology against. Make sure the storm client you use comes from the same version as the version you compiled your topology against.
+可能出现的现象：
 
+ * 在使用 `storm jar` 命令部署拓扑时出现此错误
+
+解决方案：
+
+ * 你很可能在拓扑的 jar 包中包含了 Storm 自身的 jar 包。注意，在打包拓扑时，请不要将 Storm 自身的 jar 包加入，因为 Storm 已经在它的 classpath 中提供了这些 jar 包。
+
+### 运行 storm jar 命令时出现 "NoSuchMethodError"
+
+可能出现的现象：
+
+- 运行 `storm jar` 命令时出现奇怪的 "NoSuchMethodError"
+
+解决方案：
+
+- 这可能是由于你部署拓扑的 Storm 版本与你构建拓扑时使用的 Storm 版本不同。请确保你编译拓扑时使用的 Storm 版本与你运行拓扑的 Storm 客户端版本相同。
 
 ### Kryo ConcurrentModificationException
 
-Symptoms:
+可能出现的现象：
 
- * At runtime, you get a stack trace like the following:
+ * 系统运行时出现如下的异常堆栈跟踪信息
 
-```
+```java
 java.lang.RuntimeException: java.util.ConcurrentModificationException
 	at org.apache.storm.utils.DisruptorQueue.consumeBatchToCursor(DisruptorQueue.java:84)
 	at org.apache.storm.utils.DisruptorQueue.consumeBatchWhenAvailable(DisruptorQueue.java:55)
@@ -109,18 +112,18 @@ Caused by: java.util.ConcurrentModificationException
 	at org.apache.storm.serialization.KryoValuesSerializer.serializeInto(KryoValuesSerializer.java:27)
 ```
 
-Solution: 
+解决方案：
 
- * This means that you're emitting a mutable object as an output tuple. Everything you emit into the output collector must be immutable. What's happening is that your bolt is modifying the object while it is being serialized to be sent over the network.
+ * 这个信息表示你在将一个可变的对象作为 tuple 发送出去。你发送到 output collector 中的所有对象必须是不可变的。这个错误表明对象在被序列化并发送到网络中时你的 bolt 正在修改这个对象。
+
+### Storm 底层的 NullPointerException
 
 
-### NullPointerException from deep inside Storm
+可能出现的现象：
 
-Symptoms:
+ * Storm 运行中出现了如下的 NullPointerException
 
- * You get a NullPointerException that looks something like:
-
-```
+```java
 java.lang.RuntimeException: java.lang.NullPointerException
     at org.apache.storm.utils.DisruptorQueue.consumeBatchToCursor(DisruptorQueue.java:84)
     at org.apache.storm.utils.DisruptorQueue.consumeBatchWhenAvailable(DisruptorQueue.java:55)
@@ -140,9 +143,9 @@ Caused by: java.lang.NullPointerException
     ... 6 more
 ```
 
-or 
+or
 
-```
+```java
 java.lang.RuntimeException: java.lang.NullPointerException
         at
 org.apache.storm.utils.DisruptorQueue.consumeBatchToCursor(DisruptorQueue.java:128)
@@ -177,6 +180,7 @@ org.apache.storm.utils.DisruptorQueue.consumeBatchToCursor(DisruptorQueue.java:1
         ... 6 common frames omitted
 ```
 
-Solution:
 
- * This is caused by having multiple threads issue methods on the `OutputCollector`. All emits, acks, and fails must happen on the same thread. One subtle way this can happen is if you make a `IBasicBolt` that emits on a separate thread. `IBasicBolt`'s automatically ack after execute is called, so this would cause multiple threads to use the `OutputCollector` leading to this exception. When using a basic bolt, all emits must happen in the same thread that runs `execute`.
+解决方案：
+
+- 这个问题是由于多个线程同时调用 `OutputCollector` 中的方法造成的。Storm 中所有的 emit、ack、fail 方法必须在同一个线程中运行。出现这个问题的一种场景是在一个 `IBasicBolt` 中创建了一个独立的线程。由于 `IBasicBolt` 会在 `execute` 方法调用之后自动调用 `ack`，所以这就会出现多个线程同时使用 `OutputCollector` 的情况，进而抛出这个异常。也就是说，在使用 `IBasicBolt` 时，所有的消息发送操作必须在同一个线程的 `execute` 方法中执行。

@@ -4,9 +4,9 @@ layout: documentation
 documentation: true
 ---
 
+### 简介
 
-### Introduction
-Pacemaker is a storm daemon designed to process heartbeats from workers. As Storm is scaled up, ZooKeeper begins to become a bottleneck due to high volumes of writes from workers doing heartbeats. Lots of writes to disk and too much traffic across the network is generated as ZooKeeper tries to maintain consistency.
+Pacemaker 是一个被设计用于处理 worker 心跳的守护进程。随着 Storm 集群规模的增长，大量 worker 心跳信息的写入，Zookeeper 开始成为一个性能瓶颈。Zookeeper 需要保持一致性而产生了大量磁盘 IO 和网络交换。
 
 Because heartbeats are of an ephemeral nature, they do not need to be persisted to disk or synced across nodes; an in-memory store will do. This is the role of Pacemaker. Pacemaker functions as a simple in-memory key/value store with ZooKeeper-like, directory-style keys and byte array values.
 
@@ -75,7 +75,7 @@ PacemakerClient {
     serviceName="pacemaker"
     principal="nimbus@MY.COMPANY.COM";
 };
-                         
+
 ```
 
 The JAAS config on Pacemaker must look something like this:
